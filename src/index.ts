@@ -19,3 +19,6 @@ export type {
   SchemaIR,
   ApiParseOptions,
 } from "./schema-parser"
+
+export { generate, fieldTypeToTs } from "./type-generator"
+export type { GenerateOptions } from "./type-generator"

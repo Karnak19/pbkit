@@ -1,5 +1,6 @@
-import type { SchemaIR, CollectionSchema } from "@karnak19/pbkit"
+import type { SchemaIR, CollectionSchema, CollectionsConfig } from "@karnak19/pbkit"
 import type { PbkitPlugin, PluginContext, PluginOutputFile } from "@karnak19/pbkit"
+import { isCollectionExcluded, isOperationEnabled } from "@karnak19/pbkit"
 
 function pascalCase(name: string): string {
   return name
@@ -15,94 +16,113 @@ function singularize(name: string): string {
   return name
 }
 
-function queryHooks(col: CollectionSchema): string[] {
+function queryHooks(col: CollectionSchema, collections?: CollectionsConfig): string[] {
   const p = pascalCase(col.name)
   const s = pascalCase(singularize(col.name))
   const c = JSON.stringify(col.name)
   const lines: string[] = []
+  const op = (name: string) => isOperationEnabled(col.name, name as any, collections)
 
-  lines.push(`export function use${s}(pb: PbClient, id: string, options?: RequestOptions) {`)
-  lines.push("  return useQuery({")
-  lines.push(`    queryKey: [${c}, id],`)
-  lines.push(`    queryFn: () => get${s}(pb, id, options),`)
-  lines.push("  })")
-  lines.push("}")
-  lines.push("")
-  lines.push(`export function use${p}(pb: PbClient, params?: ListParams) {`)
-  lines.push("  return useQuery({")
-  lines.push(`    queryKey: [${c}, params],`)
-  lines.push(`    queryFn: () => list${p}(pb, params),`)
-  lines.push("  })")
-  lines.push("}")
-  lines.push("")
-  lines.push(`export function useFullList${p}(pb: PbClient, params?: ListParams) {`)
-  lines.push("  return useQuery({")
-  lines.push(`    queryKey: [${c}, "full", params],`)
-  lines.push(`    queryFn: () => getFullList${p}(pb, params),`)
-  lines.push("  })")
-  lines.push("}")
+  if (op("get")) {
+    lines.push(`export function use${s}(pb: PbClient, id: string, options?: RequestOptions) {`)
+    lines.push("  return useQuery({")
+    lines.push(`    queryKey: [${c}, id],`)
+    lines.push(`    queryFn: () => get${s}(pb, id, options),`)
+    lines.push("  })")
+    lines.push("}")
+    lines.push("")
+  }
+  if (op("list")) {
+    lines.push(`export function use${p}(pb: PbClient, params?: ListParams) {`)
+    lines.push("  return useQuery({")
+    lines.push(`    queryKey: [${c}, params],`)
+    lines.push(`    queryFn: () => list${p}(pb, params),`)
+    lines.push("  })")
+    lines.push("}")
+    lines.push("")
+  }
+  if (op("getFullList")) {
+    lines.push(`export function useFullList${p}(pb: PbClient, params?: ListParams) {`)
+    lines.push("  return useQuery({")
+    lines.push(`    queryKey: [${c}, "full", params],`)
+    lines.push(`    queryFn: () => getFullList${p}(pb, params),`)
+    lines.push("  })")
+    lines.push("}")
+  }
 
   return lines
 }
 
-function mutationHooks(col: CollectionSchema): string[] {
+function mutationHooks(col: CollectionSchema, collections?: CollectionsConfig): string[] {
   const p = pascalCase(col.name)
   const s = pascalCase(singularize(col.name))
   const c = JSON.stringify(col.name)
   const lines: string[] = []
+  const op = (name: string) => isOperationEnabled(col.name, name as any, collections)
 
-  lines.push("")
-  lines.push("")
-  lines.push(`export function useCreate${s}(pb: PbClient) {`)
-  lines.push("  const queryClient = useQueryClient()")
-  lines.push("  return useMutation({")
-  lines.push(`    mutationFn: (data: ${p}Create) => create${s}(pb, data),`)
-  lines.push(`    onSuccess: () => queryClient.invalidateQueries({ queryKey: [${c}] }),`)
-  lines.push("  })")
-  lines.push("}")
-  lines.push("")
-  lines.push(`export function useUpdate${s}(pb: PbClient) {`)
-  lines.push("  const queryClient = useQueryClient()")
-  lines.push("  return useMutation({")
-  lines.push(`    mutationFn: ({ id, data }: { id: string; data: ${p}Update }) => update${s}(pb, id, data),`)
-  lines.push(`    onSuccess: (_data, variables) => {`)
-  lines.push(`      queryClient.invalidateQueries({ queryKey: [${c}] })`)
-  lines.push(`      queryClient.invalidateQueries({ queryKey: [${c}, variables.id] })`)
-  lines.push("    },")
-  lines.push("  })")
-  lines.push("}")
-  lines.push("")
-  lines.push(`export function useDelete${s}(pb: PbClient) {`)
-  lines.push("  const queryClient = useQueryClient()")
-  lines.push("  return useMutation({")
-  lines.push(`    mutationFn: (id: string) => delete${s}(pb, id),`)
-  lines.push(`    onSuccess: () => queryClient.invalidateQueries({ queryKey: [${c}] }),`)
-  lines.push("  })")
-  lines.push("}")
+  if (op("create")) {
+    lines.push("")
+    lines.push("")
+    lines.push(`export function useCreate${s}(pb: PbClient) {`)
+    lines.push("  const queryClient = useQueryClient()")
+    lines.push("  return useMutation({")
+    lines.push(`    mutationFn: (data: ${p}Create) => create${s}(pb, data),`)
+    lines.push(`    onSuccess: () => queryClient.invalidateQueries({ queryKey: [${c}] }),`)
+    lines.push("  })")
+    lines.push("}")
+  }
+  if (op("update")) {
+    lines.push("")
+    lines.push("")
+    lines.push(`export function useUpdate${s}(pb: PbClient) {`)
+    lines.push("  const queryClient = useQueryClient()")
+    lines.push("  return useMutation({")
+    lines.push(`    mutationFn: ({ id, data }: { id: string; data: ${p}Update }) => update${s}(pb, id, data),`)
+    lines.push(`    onSuccess: (_data, variables) => {`)
+    lines.push(`      queryClient.invalidateQueries({ queryKey: [${c}] })`)
+    lines.push(`      queryClient.invalidateQueries({ queryKey: [${c}, variables.id] })`)
+    lines.push("    },")
+    lines.push("  })")
+    lines.push("}")
+  }
+  if (op("delete")) {
+    lines.push("")
+    lines.push("")
+    lines.push(`export function useDelete${s}(pb: PbClient) {`)
+    lines.push("  const queryClient = useQueryClient()")
+    lines.push("  return useMutation({")
+    lines.push(`    mutationFn: (id: string) => delete${s}(pb, id),`)
+    lines.push(`    onSuccess: () => queryClient.invalidateQueries({ queryKey: [${c}] }),`)
+    lines.push("  })")
+    lines.push("}")
+  }
 
   return lines
 }
 
-export function generateTanstack(ir: SchemaIR, ctx: PluginContext): string {
+export function generateTanstack(ir: SchemaIR, ctx: PluginContext & { collections?: CollectionsConfig }): string {
   const parts: string[] = []
+  const cols = ir.collections.filter(c => !isCollectionExcluded(c.name, ctx.collections))
+
+  const sdkImports = cols.flatMap(c => {
+    const p = pascalCase(c.name)
+    const s = pascalCase(singularize(c.name))
+    return [`get${s}`, `list${p}`, `getFullList${p}`, `create${s}`, `update${s}`, `delete${s}`]
+  })
 
   parts.push("// Generated by pbkit-tanstack — do not edit")
   parts.push("")
   parts.push('import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"')
   parts.push(`import type { PbClient, ListParams, RequestOptions } from "${ctx.typesImport}"`)
-  parts.push(`import { ${ir.collections.flatMap(c => {
-    const p = pascalCase(c.name)
-    const s = pascalCase(singularize(c.name))
-    return [`get${s}`, `list${p}`, `getFullList${p}`, `create${s}`, `update${s}`, `delete${s}`]
-  }).join(", ")} } from "${ctx.sdkImport}"`)
+  parts.push(`import { ${sdkImports.join(", ")} } from "${ctx.sdkImport}"`)
   parts.push("")
 
-  for (const col of ir.collections) {
+  for (const col of cols) {
     const p = pascalCase(col.name)
     parts.push(`// --- ${p} ---`)
     parts.push("")
-    parts.push(...queryHooks(col))
-    parts.push(...mutationHooks(col))
+    parts.push(...queryHooks(col, ctx.collections))
+    parts.push(...mutationHooks(col, ctx.collections))
     parts.push("")
   }
 

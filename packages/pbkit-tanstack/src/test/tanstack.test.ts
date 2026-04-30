@@ -88,6 +88,21 @@ describe("generateTanstack", () => {
   test("snapshot", () => {
     expect(output).toMatchSnapshot()
   })
+
+  test("skips excluded collections", () => {
+    const excluded = generateTanstack(ir, { ...ctx, collections: { comments: { exclude: true } } })
+    expect(excluded).not.toContain("useComment(")
+    expect(excluded).not.toContain("useComments(")
+    expect(excluded).toContain("useArticle(")
+  })
+
+  test("skips disabled operations", () => {
+    const partial = generateTanstack(ir, { ...ctx, collections: { articles: { operations: { create: false, delete: false } } } })
+    expect(partial).not.toContain("useCreateArticle(")
+    expect(partial).not.toContain("useDeleteArticle(")
+    expect(partial).toContain("useArticle(")
+    expect(partial).toContain("useUpdateArticle(")
+  })
 })
 
 describe("tanstackPlugin", () => {

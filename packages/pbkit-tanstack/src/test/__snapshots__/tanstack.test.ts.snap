@@ -39,6 +39,7 @@ export function useCreateUser(pb: PbClient) {
   })
 }
 
+
 export function useUpdateUser(pb: PbClient) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -49,6 +50,7 @@ export function useUpdateUser(pb: PbClient) {
     },
   })
 }
+
 
 export function useDeleteUser(pb: PbClient) {
   const queryClient = useQueryClient()
@@ -90,6 +92,7 @@ export function useCreateCategory(pb: PbClient) {
   })
 }
 
+
 export function useUpdateCategory(pb: PbClient) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -100,6 +103,7 @@ export function useUpdateCategory(pb: PbClient) {
     },
   })
 }
+
 
 export function useDeleteCategory(pb: PbClient) {
   const queryClient = useQueryClient()
@@ -141,6 +145,7 @@ export function useCreateArticle(pb: PbClient) {
   })
 }
 
+
 export function useUpdateArticle(pb: PbClient) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -151,6 +156,7 @@ export function useUpdateArticle(pb: PbClient) {
     },
   })
 }
+
 
 export function useDeleteArticle(pb: PbClient) {
   const queryClient = useQueryClient()
@@ -192,6 +198,7 @@ export function useCreateComment(pb: PbClient) {
   })
 }
 
+
 export function useUpdateComment(pb: PbClient) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -202,6 +209,7 @@ export function useUpdateComment(pb: PbClient) {
     },
   })
 }
+
 
 export function useDeleteComment(pb: PbClient) {
   const queryClient = useQueryClient()

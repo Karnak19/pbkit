@@ -1,5 +1,6 @@
 import type { SchemaIR, CollectionSchema } from "../schema-parser"
 import type { SdkGenerateOptions } from "./types"
+import { isCollectionExcluded, isOperationEnabled, type CollectionsConfig } from "../config"
 
 function pascalCase(name: string): string {
   return name
@@ -15,41 +16,56 @@ function singularize(name: string): string {
   return name
 }
 
-function crudFunctions(col: CollectionSchema): string[] {
+function crudFunctions(col: CollectionSchema, collections?: CollectionsConfig): string[] {
   const p = pascalCase(col.name)
   const s = pascalCase(singularize(col.name))
   const c = JSON.stringify(col.name)
   const lines: string[] = []
+  const op = (name: string) => isOperationEnabled(col.name, name as any, collections)
 
-  lines.push(`export async function get${s}(pb: PbClient, id: string, options?: RequestOptions): Promise<${p}Record> {`)
-  lines.push(`  return pb.collection(${c}).getOne(id, options) as Promise<${p}Record>`)
-  lines.push("}")
-  lines.push("")
-  lines.push(`export async function getFirst${s}(pb: PbClient, filter: string, options?: RequestOptions): Promise<${p}Record> {`)
-  lines.push(`  return pb.collection(${c}).getFirstListItem(filter, options) as Promise<${p}Record>`)
-  lines.push("}")
-  lines.push("")
-  lines.push(`export async function list${p}(pb: PbClient, params?: ListParams): Promise<ListResult<${p}Record>> {`)
-  lines.push(`  return pb.collection(${c}).getList(params?.page, params?.perPage, params) as Promise<ListResult<${p}Record>>`)
-  lines.push("}")
-  lines.push("")
-  lines.push(`export async function getFullList${p}(pb: PbClient, params?: ListParams): Promise<${p}Record[]> {`)
-  lines.push(`  return pb.collection(${c}).getFullList(params) as Promise<${p}Record[]>`)
-  lines.push("}")
-  lines.push("")
-  lines.push(`export async function create${s}(pb: PbClient, data: ${p}Create): Promise<${p}Record> {`)
-  lines.push(`  return pb.collection(${c}).create(data) as Promise<${p}Record>`)
-  lines.push("}")
-  lines.push("")
-  lines.push(`export async function update${s}(pb: PbClient, id: string, data: ${p}Update): Promise<${p}Record> {`)
-  lines.push(`  return pb.collection(${c}).update(id, data) as Promise<${p}Record>`)
-  lines.push("}")
-  lines.push("")
-  lines.push(`export async function delete${s}(pb: PbClient, id: string): Promise<true> {`)
-  lines.push(`  await pb.collection(${c}).delete(id)`)
-  lines.push("  return true")
-  lines.push("}")
-  lines.push("")
+  if (op("get")) {
+    lines.push(`export async function get${s}(pb: PbClient, id: string, options?: RequestOptions): Promise<${p}Record> {`)
+    lines.push(`  return pb.collection(${c}).getOne(id, options) as Promise<${p}Record>`)
+    lines.push("}")
+    lines.push("")
+  }
+  if (op("getFirst")) {
+    lines.push(`export async function getFirst${s}(pb: PbClient, filter: string, options?: RequestOptions): Promise<${p}Record> {`)
+    lines.push(`  return pb.collection(${c}).getFirstListItem(filter, options) as Promise<${p}Record>`)
+    lines.push("}")
+    lines.push("")
+  }
+  if (op("list")) {
+    lines.push(`export async function list${p}(pb: PbClient, params?: ListParams): Promise<ListResult<${p}Record>> {`)
+    lines.push(`  return pb.collection(${c}).getList(params?.page, params?.perPage, params) as Promise<ListResult<${p}Record>>`)
+    lines.push("}")
+    lines.push("")
+  }
+  if (op("getFullList")) {
+    lines.push(`export async function getFullList${p}(pb: PbClient, params?: ListParams): Promise<${p}Record[]> {`)
+    lines.push(`  return pb.collection(${c}).getFullList(params) as Promise<${p}Record[]>`)
+    lines.push("}")
+    lines.push("")
+  }
+  if (op("create")) {
+    lines.push(`export async function create${s}(pb: PbClient, data: ${p}Create): Promise<${p}Record> {`)
+    lines.push(`  return pb.collection(${c}).create(data) as Promise<${p}Record>`)
+    lines.push("}")
+    lines.push("")
+  }
+  if (op("update")) {
+    lines.push(`export async function update${s}(pb: PbClient, id: string, data: ${p}Update): Promise<${p}Record> {`)
+    lines.push(`  return pb.collection(${c}).update(id, data) as Promise<${p}Record>`)
+    lines.push("}")
+    lines.push("")
+  }
+  if (op("delete")) {
+    lines.push(`export async function delete${s}(pb: PbClient, id: string): Promise<true> {`)
+    lines.push(`  await pb.collection(${c}).delete(id)`)
+    lines.push("  return true")
+    lines.push("}")
+    lines.push("")
+  }
 
   return lines
 }
@@ -114,11 +130,13 @@ function authFunctions(col: CollectionSchema): string[] {
   return lines
 }
 
-export function generateSdk(ir: SchemaIR, options: SdkGenerateOptions = {}): string {
+export function generateSdk(ir: SchemaIR, options: SdkGenerateOptions & { collections?: CollectionsConfig } = {}): string {
   const typesImport = options.typesImport ?? "./types"
   const pbImport = options.pbImport ?? "pocketbase"
 
-  const typeImports = ir.collections.flatMap(c => {
+  const cols = ir.collections.filter(c => !isCollectionExcluded(c.name, options.collections))
+
+  const typeImports = cols.flatMap(c => {
     const p = pascalCase(c.name)
     return [`${p}Record`, `${p}Create`, `${p}Update`]
   })
@@ -157,11 +175,11 @@ export function generateSdk(ir: SchemaIR, options: SdkGenerateOptions = {}): str
   parts.push("}")
   parts.push("")
 
-  for (const col of ir.collections) {
+  for (const col of cols) {
     const p = pascalCase(col.name)
     parts.push(`// --- ${p} ---`)
     parts.push("")
-    parts.push(...crudFunctions(col))
+    parts.push(...crudFunctions(col, options.collections))
     if (col.type === "auth") {
       parts.push(...authFunctions(col))
     }

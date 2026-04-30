@@ -115,4 +115,19 @@ describe("generateSdk", () => {
   test("snapshot", () => {
     expect(output).toMatchSnapshot()
   })
+
+  test("skips excluded collections entirely", () => {
+    const excluded = generateSdk(ir, { collections: { comments: { exclude: true } } })
+    expect(excluded).not.toContain("getComment(")
+    expect(excluded).not.toContain('pb.collection("comments")')
+    expect(excluded).not.toContain("CommentsRecord")
+  })
+
+  test("skips disabled operations", () => {
+    const partial = generateSdk(ir, { collections: { articles: { operations: { create: false, delete: false } } } })
+    expect(partial).not.toContain("createArticle(")
+    expect(partial).not.toContain("deleteArticle(")
+    expect(partial).toContain("getArticle(")
+    expect(partial).toContain("updateArticle(")
+  })
 })

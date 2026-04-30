@@ -27,3 +27,14 @@ export { generateSdk } from "./sdk-generator"
 export type { SdkGenerateOptions } from "./sdk-generator"
 
 export type { PbkitPlugin, PluginContext, PluginOutputFile } from "./plugin"
+
+export {
+  isCollectionExcluded,
+  isOperationEnabled,
+  enabledOperations,
+} from "./config"
+export type {
+  OperationName,
+  CollectionConfig,
+  CollectionsConfig,
+} from "./config"

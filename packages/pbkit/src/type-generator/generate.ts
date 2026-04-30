@@ -1,5 +1,6 @@
 import type { SchemaIR, CollectionSchema, CollectionField } from "../schema-parser"
 import type { GenerateOptions } from "./types"
+import { isCollectionExcluded, type CollectionsConfig } from "../config"
 
 const SYSTEM_SKIP = new Set(["tokenKey"])
 const AUTH_SYSTEM = new Set(["email", "emailVisibility", "verified"])
@@ -92,12 +93,14 @@ function createType(collection: CollectionSchema, options: GenerateOptions): str
   return `export type ${name}Create = {\n${fields.join("\n")}\n}`
 }
 
-export function generate(ir: SchemaIR, options: GenerateOptions = {}): string {
+export function generate(ir: SchemaIR, options: GenerateOptions & { collections?: CollectionsConfig } = {}): string {
   const opts: GenerateOptions = {
     dateStrings: options.dateStrings ?? true,
     optionalFields: options.optionalFields ?? "required-only",
     nullableFields: options.nullableFields ?? false,
   }
+
+  const cols = ir.collections.filter(c => !isCollectionExcluded(c.name, options.collections))
 
   const parts: string[] = []
 
@@ -112,7 +115,7 @@ export function generate(ir: SchemaIR, options: GenerateOptions = {}): string {
   parts.push("}")
   parts.push("")
 
-  const hasAuth = ir.collections.some(c => c.type === "auth")
+  const hasAuth = cols.some(c => c.type === "auth")
   if (hasAuth) {
     parts.push("export interface AuthRecord extends BaseRecord {")
     parts.push("  email: string")
@@ -122,7 +125,7 @@ export function generate(ir: SchemaIR, options: GenerateOptions = {}): string {
     parts.push("")
   }
 
-  for (const col of ir.collections) {
+  for (const col of cols) {
     const name = pascalCase(col.name)
     parts.push(`// ${name}`)
     parts.push("")
@@ -134,7 +137,7 @@ export function generate(ir: SchemaIR, options: GenerateOptions = {}): string {
     parts.push("")
   }
 
-  const names = ir.collections.map(c => JSON.stringify(c.name)).join(" | ")
+  const names = cols.map(c => JSON.stringify(c.name)).join(" | ")
   parts.push(`export type CollectionName = ${names}`)
   parts.push("")
 

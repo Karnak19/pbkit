@@ -169,4 +169,17 @@ describe("generate", () => {
     const output = generate(ir)
     expect(output).toMatchSnapshot()
   })
+
+  test("skips excluded collections", () => {
+    const output = generate(ir, { collections: { comments: { exclude: true } } })
+    expect(output).not.toContain("CommentsRecord")
+    expect(output).not.toContain("CommentsCreate")
+    expect(output).not.toContain("// Comments")
+  })
+
+  test("excludes from CollectionName union", () => {
+    const output = generate(ir, { collections: { comments: { exclude: true } } })
+    expect(output).not.toContain('"comments"')
+    expect(output).toContain('"users" | "categories" | "articles"')
+  })
 })

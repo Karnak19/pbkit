@@ -25,3 +25,5 @@ export type { GenerateOptions } from "./type-generator"
 
 export { generateSdk } from "./sdk-generator"
 export type { SdkGenerateOptions } from "./sdk-generator"
+
+export type { PbkitPlugin, PluginContext, PluginOutputFile } from "./plugin"

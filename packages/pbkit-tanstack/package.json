@@ -1,0 +1,32 @@
+{
+  "name": "@karnak19/pbkit-tanstack-react-query",
+  "version": "0.0.1",
+  "description": "TanStack Query React hooks plugin for pbkit",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir=dist --target=node && tsc --emitDeclarationOnly",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0"
+  },
+  "dependencies": {
+    "@karnak19/pbkit": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.13",
+    "typescript": "^6.0.0"
+  }
+}

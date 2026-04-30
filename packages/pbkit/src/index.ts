@@ -38,3 +38,8 @@ export type {
   CollectionConfig,
   CollectionsConfig,
 } from "./config"
+
+export type { PbkitConfig, InputConfig } from "./config"
+export { resolveConfigPath, findConfig } from "./config"
+export { generateProject } from "./generate"
+export type { GenerateResult } from "./generate"

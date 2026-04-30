@@ -130,4 +130,26 @@ describe("generateSdk", () => {
     expect(partial).toContain("getArticle(")
     expect(partial).toContain("updateArticle(")
   })
+
+  test("imports Expand types for collections with relations", () => {
+    expect(output).toContain("ArticlesExpand")
+    expect(output).toContain("CommentsExpand")
+  })
+
+  test("uses typed expand in CRUD functions for collections with relations", () => {
+    const getFn = output.slice(
+      output.indexOf("export async function getArticle"),
+      output.indexOf("}", output.indexOf("export async function getArticle")) + 1,
+    )
+    expect(getFn).toContain('Omit<RequestOptions, "expand"> & { expand?: ArticlesExpand }')
+  })
+
+  test("uses plain RequestOptions for collections without relations", () => {
+    const getFn = output.slice(
+      output.indexOf("export async function getCategory"),
+      output.indexOf("}", output.indexOf("export async function getCategory")) + 1,
+    )
+    expect(getFn).toContain("options?: RequestOptions")
+    expect(getFn).not.toContain("Omit")
+  })
 })

@@ -33,3 +33,6 @@ export function isOperationEnabled(
 export function enabledOperations(collectionName: string, config?: CollectionsConfig): OperationName[] {
   return ALL_OPS.filter(op => isOperationEnabled(collectionName, op, config))
 }
+
+export type { PbkitConfig, InputConfig } from "./types"
+export { resolveConfigPath, findConfig } from "./loader"

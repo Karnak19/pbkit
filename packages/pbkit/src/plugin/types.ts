@@ -1,4 +1,5 @@
 import type { SchemaIR } from "../schema-parser"
+import type { CollectionsConfig } from "../config"
 
 export interface PluginOutputFile {
   path: string
@@ -9,6 +10,7 @@ export interface PluginContext {
   ir: SchemaIR
   typesImport: string
   sdkImport: string
+  collections?: CollectionsConfig
 }
 
 export interface PbkitPlugin {

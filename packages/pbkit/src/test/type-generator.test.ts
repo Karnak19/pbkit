@@ -182,4 +182,38 @@ describe("generate", () => {
     expect(output).not.toContain('"comments"')
     expect(output).toContain('"users" | "categories" | "articles"')
   })
+
+  test("generates Expand types for collections with relations", () => {
+    const output = generate(ir)
+    expect(output).toContain("export type ArticlesExpand")
+    expect(output).toContain("export type CommentsExpand")
+  })
+
+  test("skips Expand type for collections without relations", () => {
+    const output = generate(ir)
+    expect(output).not.toContain("CategoriesExpand")
+    expect(output).not.toContain("UsersExpand")
+  })
+
+  test("includes flat expand paths", () => {
+    const output = generate(ir)
+    const articlesExpand = output.match(/export type ArticlesExpand = (.+)/)?.[1]
+    expect(articlesExpand).toContain('"author"')
+    expect(articlesExpand).toContain('"categories"')
+  })
+
+  test("includes deep expand paths by default (depth 2)", () => {
+    const output = generate(ir)
+    const commentsExpand = output.match(/export type CommentsExpand = (.+)/)?.[1]
+    expect(commentsExpand).toContain('"article.author"')
+    expect(commentsExpand).toContain('"article.categories"')
+  })
+
+  test("respects expandDepth option", () => {
+    const output = generate(ir, { expandDepth: 1 })
+    expect(output).not.toContain('"article.author"')
+    const commentsExpand = output.match(/export type CommentsExpand = (.+)/)?.[1]
+    expect(commentsExpand).toContain('"article"')
+    expect(commentsExpand).toContain('"author"')
+  })
 })

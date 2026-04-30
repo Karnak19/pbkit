@@ -16,21 +16,32 @@ function singularize(name: string): string {
   return name
 }
 
-function crudFunctions(col: CollectionSchema, collections?: CollectionsConfig): string[] {
+function hasExpandType(col: CollectionSchema, ir: SchemaIR): boolean {
+  return ir.relations.some(r => r.collectionName === col.name)
+}
+
+function expandParam(col: CollectionSchema, ir: SchemaIR): string {
+  if (!hasExpandType(col, ir)) return "RequestOptions"
+  const p = pascalCase(col.name)
+  return `Omit<RequestOptions, "expand"> & { expand?: ${p}Expand }`
+}
+
+function crudFunctions(col: CollectionSchema, ir: SchemaIR, collections?: CollectionsConfig): string[] {
   const p = pascalCase(col.name)
   const s = pascalCase(singularize(col.name))
   const c = JSON.stringify(col.name)
+  const ep = expandParam(col, ir)
   const lines: string[] = []
   const op = (name: string) => isOperationEnabled(col.name, name as any, collections)
 
   if (op("get")) {
-    lines.push(`export async function get${s}(pb: PbClient, id: string, options?: RequestOptions): Promise<${p}Record> {`)
+    lines.push(`export async function get${s}(pb: PbClient, id: string, options?: ${ep}): Promise<${p}Record> {`)
     lines.push(`  return pb.collection(${c}).getOne(id, options) as Promise<${p}Record>`)
     lines.push("}")
     lines.push("")
   }
   if (op("getFirst")) {
-    lines.push(`export async function getFirst${s}(pb: PbClient, filter: string, options?: RequestOptions): Promise<${p}Record> {`)
+    lines.push(`export async function getFirst${s}(pb: PbClient, filter: string, options?: ${ep}): Promise<${p}Record> {`)
     lines.push(`  return pb.collection(${c}).getFirstListItem(filter, options) as Promise<${p}Record>`)
     lines.push("}")
     lines.push("")
@@ -138,7 +149,9 @@ export function generateSdk(ir: SchemaIR, options: SdkGenerateOptions & { collec
 
   const typeImports = cols.flatMap(c => {
     const p = pascalCase(c.name)
-    return [`${p}Record`, `${p}Create`, `${p}Update`]
+    const imports = [`${p}Record`, `${p}Create`, `${p}Update`]
+    if (hasExpandType(c, ir)) imports.push(`${p}Expand`)
+    return imports
   })
 
   const parts: string[] = []
@@ -179,7 +192,7 @@ export function generateSdk(ir: SchemaIR, options: SdkGenerateOptions & { collec
     const p = pascalCase(col.name)
     parts.push(`// --- ${p} ---`)
     parts.push("")
-    parts.push(...crudFunctions(col, options.collections))
+    parts.push(...crudFunctions(col, ir, options.collections))
     if (col.type === "auth") {
       parts.push(...authFunctions(col))
     }

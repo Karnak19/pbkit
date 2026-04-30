@@ -93,12 +93,54 @@ function createType(collection: CollectionSchema, options: GenerateOptions): str
   return `export type ${name}Create = {\n${fields.join("\n")}\n}`
 }
 
+function getExpandPaths(
+  ir: SchemaIR,
+  collectionName: string,
+  maxDepth: number,
+  depth: number,
+  visited: Set<string>,
+): string[] {
+  if (depth >= maxDepth || visited.has(collectionName)) return []
+  visited.add(collectionName)
+
+  const col = ir.collections.find(c => c.name === collectionName)
+  if (!col) return []
+
+  const paths: string[] = []
+
+  for (const field of col.fields) {
+    if (field.type !== "relation") continue
+    paths.push(field.name)
+
+    const targetName = ir.collections.find(
+      c => c.id === field.options.collectionId,
+    )?.name
+    if (!targetName) continue
+
+    const nextVisited = new Set(visited)
+    for (const deep of getExpandPaths(ir, targetName, maxDepth, depth + 1, nextVisited)) {
+      paths.push(`${field.name}.${deep}`)
+    }
+  }
+
+  return paths
+}
+
+function expandType(col: CollectionSchema, ir: SchemaIR, maxDepth: number): string | null {
+  const paths = getExpandPaths(ir, col.name, maxDepth, 0, new Set())
+  if (paths.length === 0) return null
+  const name = pascalCase(col.name)
+  const union = paths.map(p => JSON.stringify(p)).join(" | ")
+  return `export type ${name}Expand = ${union}`
+}
+
 export function generate(ir: SchemaIR, options: GenerateOptions & { collections?: CollectionsConfig } = {}): string {
   const opts: GenerateOptions = {
     dateStrings: options.dateStrings ?? true,
     optionalFields: options.optionalFields ?? "required-only",
     nullableFields: options.nullableFields ?? false,
   }
+  const expandDepth = options.expandDepth ?? 2
 
   const cols = ir.collections.filter(c => !isCollectionExcluded(c.name, options.collections))
 
@@ -135,6 +177,11 @@ export function generate(ir: SchemaIR, options: GenerateOptions & { collections?
     parts.push("")
     parts.push(`export type ${name}Update = Partial<${name}Create>`)
     parts.push("")
+    const exp = expandType(col, ir, expandDepth)
+    if (exp) {
+      parts.push(exp)
+      parts.push("")
+    }
   }
 
   const names = cols.map(c => JSON.stringify(c.name)).join(" | ")

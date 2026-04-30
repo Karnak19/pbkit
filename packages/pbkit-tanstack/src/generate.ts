@@ -100,7 +100,7 @@ function mutationHooks(col: CollectionSchema, collections?: CollectionsConfig): 
   return lines
 }
 
-export function generateTanstack(ir: SchemaIR, ctx: PluginContext & { collections?: CollectionsConfig }): string {
+export function generateTanstack(ir: SchemaIR, ctx: PluginContext): string {
   const parts: string[] = []
   const cols = ir.collections.filter(c => !isCollectionExcluded(c.name, ctx.collections))
 

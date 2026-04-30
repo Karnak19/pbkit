@@ -1,0 +1,350 @@
+[
+  {
+    "id": "_pbc_users",
+    "name": "users",
+    "type": "auth",
+    "system": false,
+    "fields": [
+      {
+        "id": "text_id",
+        "name": "id",
+        "type": "text",
+        "system": true,
+        "required": true,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$"
+      },
+      {
+        "id": "password_id",
+        "name": "password",
+        "type": "password",
+        "system": true,
+        "required": true,
+        "min": 8
+      },
+      {
+        "id": "email_id",
+        "name": "email",
+        "type": "email",
+        "system": true,
+        "required": true
+      },
+      {
+        "id": "bool_id",
+        "name": "emailVisibility",
+        "type": "bool",
+        "system": true,
+        "required": false
+      },
+      {
+        "id": "bool_id2",
+        "name": "verified",
+        "type": "bool",
+        "system": true,
+        "required": false
+      },
+      {
+        "id": "text_id2",
+        "name": "name",
+        "type": "text",
+        "system": false,
+        "required": false,
+        "max": 100
+      },
+      {
+        "id": "file_id",
+        "name": "avatar",
+        "type": "file",
+        "system": false,
+        "required": false,
+        "maxSelect": 1,
+        "maxSize": 5242880,
+        "mimeTypes": ["image/jpeg", "image/png", "image/svg+xml", "image/gif", "image/webp"]
+      },
+      {
+        "id": "autodate_id",
+        "name": "created",
+        "type": "autodate",
+        "system": true,
+        "onCreate": true
+      },
+      {
+        "id": "autodate_id2",
+        "name": "updated",
+        "type": "autodate",
+        "system": true,
+        "onCreate": true,
+        "onUpdate": true
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_email ON users (email) WHERE email != ''"
+    ]
+  },
+  {
+    "id": "_pbc_categories",
+    "name": "categories",
+    "type": "base",
+    "system": false,
+    "fields": [
+      {
+        "id": "text_cat_id",
+        "name": "id",
+        "type": "text",
+        "system": true,
+        "required": true,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$"
+      },
+      {
+        "id": "text_cat_name",
+        "name": "name",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "min": 1,
+        "max": 100
+      },
+      {
+        "id": "text_cat_slug",
+        "name": "slug",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "pattern": "^[a-z0-9][a-z0-9-]*$"
+      },
+      {
+        "id": "autodate_cat_created",
+        "name": "created",
+        "type": "autodate",
+        "system": true,
+        "onCreate": true
+      },
+      {
+        "id": "autodate_cat_updated",
+        "name": "updated",
+        "type": "autodate",
+        "system": true,
+        "onCreate": true,
+        "onUpdate": true
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_categories_slug ON categories (slug)"
+    ]
+  },
+  {
+    "id": "_pbc_articles",
+    "name": "articles",
+    "type": "base",
+    "system": false,
+    "fields": [
+      {
+        "id": "text_art_id",
+        "name": "id",
+        "type": "text",
+        "system": true,
+        "required": true,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$"
+      },
+      {
+        "id": "text_art_title",
+        "name": "title",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "min": 1,
+        "max": 200
+      },
+      {
+        "id": "editor_art_content",
+        "name": "content",
+        "type": "editor",
+        "system": false,
+        "required": false,
+        "convertURLs": true
+      },
+      {
+        "id": "select_art_status",
+        "name": "status",
+        "type": "select",
+        "system": false,
+        "required": true,
+        "maxSelect": 1,
+        "values": ["draft", "published", "archived"]
+      },
+      {
+        "id": "select_art_tags",
+        "name": "tags",
+        "type": "select",
+        "system": false,
+        "required": false,
+        "maxSelect": 5,
+        "values": ["technology", "design", "business", "lifestyle", "programming"]
+      },
+      {
+        "id": "relation_art_author",
+        "name": "author",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pbc_users",
+        "cascadeDelete": true
+      },
+      {
+        "id": "relation_art_categories",
+        "name": "categories",
+        "type": "relation",
+        "system": false,
+        "required": false,
+        "maxSelect": 5,
+        "collectionId": "_pbc_categories",
+        "cascadeDelete": false
+      },
+      {
+        "id": "file_art_cover",
+        "name": "cover",
+        "type": "file",
+        "system": false,
+        "required": false,
+        "maxSelect": 1,
+        "maxSize": 10485760,
+        "mimeTypes": ["image/jpeg", "image/png", "image/webp"]
+      },
+      {
+        "id": "number_art_views",
+        "name": "views",
+        "type": "number",
+        "system": false,
+        "required": false,
+        "min": 0,
+        "noDecimal": true
+      },
+      {
+        "id": "bool_art_featured",
+        "name": "featured",
+        "type": "bool",
+        "system": false,
+        "required": false
+      },
+      {
+        "id": "json_art_metadata",
+        "name": "metadata",
+        "type": "json",
+        "system": false,
+        "required": false
+      },
+      {
+        "id": "date_art_published_at",
+        "name": "published_at",
+        "type": "date",
+        "system": false,
+        "required": false
+      },
+      {
+        "id": "url_art_source",
+        "name": "source",
+        "type": "url",
+        "system": false,
+        "required": false
+      },
+      {
+        "id": "autodate_art_created",
+        "name": "created",
+        "type": "autodate",
+        "system": true,
+        "onCreate": true
+      },
+      {
+        "id": "autodate_art_updated",
+        "name": "updated",
+        "type": "autodate",
+        "system": true,
+        "onCreate": true,
+        "onUpdate": true
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_articles_status ON articles (status)",
+      "CREATE INDEX idx_articles_author ON articles (author)"
+    ]
+  },
+  {
+    "id": "_pbc_comments",
+    "name": "comments",
+    "type": "base",
+    "system": false,
+    "fields": [
+      {
+        "id": "text_com_id",
+        "name": "id",
+        "type": "text",
+        "system": true,
+        "required": true,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$"
+      },
+      {
+        "id": "text_com_content",
+        "name": "content",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "min": 1,
+        "max": 1000
+      },
+      {
+        "id": "relation_com_article",
+        "name": "article",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pbc_articles",
+        "cascadeDelete": true
+      },
+      {
+        "id": "relation_com_author",
+        "name": "author",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pbc_users",
+        "cascadeDelete": false
+      },
+      {
+        "id": "autodate_com_created",
+        "name": "created",
+        "type": "autodate",
+        "system": true,
+        "onCreate": true
+      },
+      {
+        "id": "autodate_com_updated",
+        "name": "updated",
+        "type": "autodate",
+        "system": true,
+        "onCreate": true,
+        "onUpdate": true
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_comments_article ON comments (article)"
+    ]
+  }
+]

@@ -14,7 +14,6 @@ Use pbkit when a project needs type-safe TypeScript access to a PocketBase backe
 - `types.ts`: TypeScript types for each non-excluded collection, including `XxxRecord`, `XxxCreate`, `XxxUpdate`, `XxxExpand`, and `CollectionName`.
 - `sdk.ts`: typed CRUD functions wrapping the official `pocketbase` JavaScript SDK.
 - `options.ts`: TanStack Query output when using `@karnak19/pbkit-tanstack`.
-- `client.gen.ts`: planned generated client output; check the current project version before relying on this file.
 
 ## Install
 
@@ -27,8 +26,10 @@ bun add @karnak19/pbkit pocketbase
 For TanStack Query generation:
 
 ```bash
-bun add @karnak19/pbkit-tanstack @tanstack/react-query
+bun add @karnak19/pbkit-tanstack @tanstack/query-core
 ```
+
+Install the framework adapter used by the app as well, such as `@tanstack/react-query`, `@tanstack/solid-query`, `@tanstack/svelte-query`, or `@tanstack/vue-query`.
 
 ## Configuration
 
@@ -140,7 +141,7 @@ const created = await createArticle(pb, data)
 const updated = await updateArticle(pb, created.id, { status: "published" })
 ```
 
-Generated auth collections include helpers such as `authUserWithPassword`, `authUserWithOAuth2`, `requestUserPasswordReset`, `confirmUserPasswordReset`, `requestUserVerification`, `confirmUserVerification`, and `refreshUser`.
+Generated auth collections include helpers named from the singular collection name. For a `users` collection, pbkit generates helpers such as `authUserWithPassword`, `authUserWithOAuth2`, `authUserWithOTP`, `requestUserPasswordReset`, `confirmUserPasswordReset`, `requestUserVerification`, `confirmUserVerification`, `requestUserEmailChange`, `confirmUserEmailChange`, and `refreshUser`. For an `admins` collection, those names use `Admin` instead of `User`.
 
 ## TanStack Query Integration
 

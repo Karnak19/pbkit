@@ -1,6 +1,6 @@
 {
   "name": "@karnak19/pbkit",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "PocketBase code generation toolkit",
   "type": "module",
   "main": "dist/index.js",
@@ -14,7 +14,10 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "bun build src/index.ts src/cli/index.ts --outdir=dist --target=node && tsc --emitDeclarationOnly",
     "test": "bun test",

@@ -1,6 +1,6 @@
 {
   "name": "@karnak19/pbkit-tanstack",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "TanStack Query options plugin for pbkit",
   "type": "module",
   "main": "dist/index.js",
@@ -11,7 +11,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "bun build src/index.ts --outdir=dist --target=node && tsc --emitDeclarationOnly",
     "test": "bun test",

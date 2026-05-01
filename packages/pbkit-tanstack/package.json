@@ -1,7 +1,7 @@
 {
-  "name": "@karnak19/pbkit-tanstack-react-query",
+  "name": "@karnak19/pbkit-tanstack",
   "version": "0.0.1",
-  "description": "TanStack Query React hooks plugin for pbkit",
+  "description": "TanStack Query options plugin for pbkit",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,7 +20,7 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@tanstack/react-query": "^5.0.0"
+    "@tanstack/query-core": "^5.0.0"
   },
   "dependencies": {
     "@karnak19/pbkit": "workspace:*"

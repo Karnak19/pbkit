@@ -1,2 +1,2 @@
-export { generateSdk } from "./generate"
-export type { SdkGenerateOptions } from "./types"
+export { generateSdk, generateClientFile } from "./generate";
+export type { SdkGenerateOptions } from "./types";

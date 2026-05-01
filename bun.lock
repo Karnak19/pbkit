@@ -12,6 +12,9 @@
     "packages/pbkit": {
       "name": "@karnak19/pbkit",
       "version": "0.0.1",
+      "bin": {
+        "pbkit": "./src/cli/index.ts",
+      },
       "devDependencies": {
         "@types/bun": "^1.3.13",
         "typescript": "^6.0.0",
@@ -27,12 +30,19 @@
         "@types/bun": "^1.3.13",
         "typescript": "^6.0.0",
       },
+      "peerDependencies": {
+        "@tanstack/react-query": "^5.0.0",
+      },
     },
   },
   "packages": {
     "@karnak19/pbkit": ["@karnak19/pbkit@workspace:packages/pbkit"],
 
     "@karnak19/pbkit-tanstack": ["@karnak19/pbkit-tanstack@workspace:packages/pbkit-tanstack"],
+
+    "@tanstack/query-core": ["@tanstack/query-core@5.100.7", "", {}, "sha512-5R7i6ENJLhVeeJrrUz7jKBXUXv/BJrxf9FQJSkR13bPrb3zOcE8A0Z0PxYCcsKPOsiIlTibrBL/zZbtUO1TFyQ=="],
+
+    "@tanstack/react-query": ["@tanstack/react-query@5.100.7", "", { "dependencies": { "@tanstack/query-core": "5.100.7" }, "peerDependencies": { "react": "^18 || ^19" } }, "sha512-LoISYWz8dOOuQbeIctF8K6yi42TWtR1WPGpwGuRUpF3u79JVVIg/PVR0MQdIA0VSHqD/ydf/b7PhKTkg3I4fLQ=="],
 
     "@turbo/darwin-64": ["@turbo/darwin-64@2.9.6", "", { "os": "darwin", "cpu": "x64" }, "sha512-X/56SnVXIQZBLKwniGTwEQTGmtE5brSACnKMBWpY3YafuxVYefrC2acamfjgxP7BG5w3I+6jf0UrLoSzgPcSJg=="],
 

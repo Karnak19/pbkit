@@ -8,7 +8,7 @@ Given a PocketBase schema, pbkit generates:
 
 - **`types.ts`** — TypeScript interfaces for every collection (`XxxRecord`, `XxxCreate`, `XxxUpdate`, `XxxExpand`)
 - **`sdk.ts`** — Typed CRUD functions wrapping the official PocketBase JS SDK, with typed expand parameters
-- **Plugin output** — e.g. TanStack Query React hooks with cache invalidation
+- **Plugin output** — e.g. TanStack Query options with query key helpers
 
 ## Quick start
 
@@ -170,12 +170,12 @@ confirmUserVerification(pb, token)
 ## TanStack Query plugin
 
 ```bash
-bun add @karnak19/pbkit-tanstack-react-query
+bun add @karnak19/pbkit-tanstack
 ```
 
 ```ts
 // pbkit.config.ts
-import { tanstackPlugin } from "@karnak19/pbkit-tanstack-react-query"
+import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
 
 export default {
   input: "https://my-pb.example.com",
@@ -184,20 +184,31 @@ export default {
 }
 ```
 
-Generates `hooks.ts` with query and mutation hooks:
+Generates `options.ts` with `queryOptions`, `mutationOptions`, and query key helpers:
 
 ```ts
-import { useArticle, useArticles, useCreateArticle, useUpdateArticle } from "./generated/hooks"
+import {
+  articleOptions,
+  articlesOptions,
+  articleQueryKey,
+  createArticleMutation,
+  updateArticleMutation,
+} from "./generated/options"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
-// Query hooks
-const { data } = useArticle(pb, "RECORD_ID")
-const { data } = useArticles(pb, { page: 1, perPage: 20 })
+// Query options
+const { data } = useQuery(articleOptions(pb, "RECORD_ID"))
+const { data } = useQuery(articlesOptions(pb, { page: 1, perPage: 20 }))
 
-// Mutation hooks with automatic cache invalidation
-const createMut = useCreateArticle(pb)
+// Manual cache invalidation with query key helpers
+const queryClient = useQueryClient()
+queryClient.invalidateQueries({ queryKey: articleQueryKey("RECORD_ID") })
+
+// Mutation options
+const createMut = useMutation(createArticleMutation(pb))
 createMut.mutate({ title: "New article", status: "draft" })
 
-const updateMut = useUpdateArticle(pb)
+const updateMut = useMutation(updateArticleMutation(pb))
 updateMut.mutate({ id: "RECORD_ID", data: { title: "Updated" } })
 ```
 
@@ -255,7 +266,7 @@ await generateProject({
 | Package | Description |
 |---|---|
 | `@karnak19/pbkit` | Core: schema parser, type generator, SDK generator, CLI |
-| `@karnak19/pbkit-tanstack-react-query` | Plugin: TanStack Query React hooks |
+| `@karnak19/pbkit-tanstack` | Plugin: TanStack Query options (queryOptions/mutationOptions) |
 
 ## License
 

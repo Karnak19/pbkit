@@ -35,6 +35,13 @@ jobs:
 
       - run: bun run ci
 
+      - name: Verify npm auth
+        run: |
+          npm whoami
+          npm org ls karnak19 --json
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Create release PR or publish packages
         uses: changesets/action@v1
         with:

@@ -25,6 +25,10 @@ describe("generateTanstack", () => {
     expect(output).not.toContain("useQueryClient");
   });
 
+  test("does not import PbClient", () => {
+    expect(output).not.toContain("PbClient");
+  });
+
   test("imports SDK functions", () => {
     expect(output).toContain("getArticle");
     expect(output).toContain("getFirstArticle");
@@ -100,8 +104,24 @@ describe("generateTanstack", () => {
     expect(output).not.toContain("onSuccess");
   });
 
-  test("create mutation accepts Create type", () => {
-    expect(output).toContain("mutationFn: (data: ArticlesCreate) => createArticle(pb, data)");
+  test("query options call SDK functions without pb", () => {
+    expect(output).toContain("queryFn: () => getArticle(id, options)");
+    expect(output).toContain("queryFn: () => listArticles(params)");
+  });
+
+  test("mutation options call SDK functions without pb", () => {
+    expect(output).toContain("mutationFn: (data: ArticlesCreate) => createArticle(data)");
+    expect(output).toContain("mutationFn: (id: string) => deleteArticle(id)");
+  });
+
+  test("mutation options have no parameters", () => {
+    expect(output).toContain("createArticleMutationOptions()");
+    expect(output).toContain("deleteArticleMutationOptions()");
+  });
+
+  test("query options do not take pb as param", () => {
+    expect(output).not.toMatch(/articleOptions\(pb/);
+    expect(output).not.toMatch(/userOptions\(pb/);
   });
 
   test("update mutation accepts id + Update type", () => {

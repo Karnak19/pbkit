@@ -20,7 +20,7 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@tanstack/react-query": "^5.0.0"
+    "@tanstack/query-core": "^5.0.0"
   },
   "dependencies": {
     "@karnak19/pbkit": "workspace:*"

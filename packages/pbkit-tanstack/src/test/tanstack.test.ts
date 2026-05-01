@@ -13,8 +13,8 @@ const ctx = {
 describe("generateTanstack", () => {
   const output = generateTanstack(ir, ctx);
 
-  test("imports TanStack Query", () => {
-    expect(output).toContain('from "@tanstack/react-query"');
+  test("imports from @tanstack/query-core", () => {
+    expect(output).toContain('from "@tanstack/query-core"');
   });
 
   test("imports queryOptions and mutationOptions", () => {
@@ -27,6 +27,7 @@ describe("generateTanstack", () => {
 
   test("imports SDK functions", () => {
     expect(output).toContain("getArticle");
+    expect(output).toContain("getFirstArticle");
     expect(output).toContain("listArticles");
     expect(output).toContain("createArticle");
     expect(output).toContain("updateArticle");
@@ -45,36 +46,43 @@ describe("generateTanstack", () => {
 
   test("generates query options for each collection", () => {
     expect(output).toContain("export function userOptions(");
+    expect(output).toContain("export function getFirstUserOptions(");
     expect(output).toContain("export function usersOptions(");
     expect(output).toContain("export function fullListUsersOptions(");
     expect(output).toContain("export function articleOptions(");
+    expect(output).toContain("export function getFirstArticleOptions(");
     expect(output).toContain("export function articlesOptions(");
     expect(output).toContain("export function fullListArticlesOptions(");
     expect(output).toContain("export function categoryOptions(");
+    expect(output).toContain("export function getFirstCategoryOptions(");
     expect(output).toContain("export function categoriesOptions(");
     expect(output).toContain("export function commentOptions(");
+    expect(output).toContain("export function getFirstCommentOptions(");
     expect(output).toContain("export function commentsOptions(");
   });
 
   test("generates mutation options for each collection", () => {
-    expect(output).toContain("export function createArticleMutation(");
-    expect(output).toContain("export function updateArticleMutation(");
-    expect(output).toContain("export function deleteArticleMutation(");
-    expect(output).toContain("export function createUserMutation(");
-    expect(output).toContain("export function updateUserMutation(");
-    expect(output).toContain("export function deleteUserMutation(");
+    expect(output).toContain("export function createArticleMutationOptions(");
+    expect(output).toContain("export function updateArticleMutationOptions(");
+    expect(output).toContain("export function deleteArticleMutationOptions(");
+    expect(output).toContain("export function createUserMutationOptions(");
+    expect(output).toContain("export function updateUserMutationOptions(");
+    expect(output).toContain("export function deleteUserMutationOptions(");
   });
 
   test("generates query key helpers", () => {
     expect(output).toContain("export function articleQueryKey(id: string)");
+    expect(output).toContain("export function getFirstArticleQueryKey(filter: string)");
     expect(output).toContain("export function articlesQueryKey(params?: ListParams)");
     expect(output).toContain("export function fullListArticlesQueryKey(params?: ListParams)");
     expect(output).toContain("export function userQueryKey(id: string)");
+    expect(output).toContain("export function getFirstUserQueryKey(filter: string)");
     expect(output).toContain("export function usersQueryKey(params?: ListParams)");
   });
 
   test("query options use correct query keys", () => {
     expect(output).toContain('queryKey: ["articles", id]');
+    expect(output).toContain('queryKey: ["articles", "first", filter]');
     expect(output).toContain('queryKey: ["articles", params]');
     expect(output).toContain('queryKey: ["articles", "full", params]');
     expect(output).toContain('queryKey: ["users", id]');
@@ -82,6 +90,7 @@ describe("generateTanstack", () => {
 
   test("query key helpers return const arrays", () => {
     expect(output).toContain('return ["articles", id] as const');
+    expect(output).toContain('return ["articles", "first", filter] as const');
     expect(output).toContain('return ["articles", params] as const');
     expect(output).toContain('return ["users", id] as const');
   });
@@ -115,10 +124,10 @@ describe("generateTanstack", () => {
       ...ctx,
       collections: { articles: { operations: { create: false, delete: false } } },
     });
-    expect(partial).not.toContain("createArticleMutation(");
-    expect(partial).not.toContain("deleteArticleMutation(");
+    expect(partial).not.toContain("createArticleMutationOptions(");
+    expect(partial).not.toContain("deleteArticleMutationOptions(");
     expect(partial).toContain("articleOptions(");
-    expect(partial).toContain("updateArticleMutation(");
+    expect(partial).toContain("updateArticleMutationOptions(");
   });
 });
 

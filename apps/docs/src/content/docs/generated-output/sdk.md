@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-pbkit generates `sdk.ts` with fully typed functions for every non-excluded collection.
+pbkit generates `sdk.gen.ts` with fully typed functions for every non-excluded collection.
 
 ## CRUD functions
 
@@ -40,7 +40,7 @@ deleteArticle(pb: PbClient, id: string): Promise<true>
 When a collection has relations, the `expand` option is typed to the collection's `Expand` type:
 
 ```ts
-import { getArticle } from "./generated/sdk"
+import { getArticle } from "./generated/sdk.gen"
 
 // expand is typed to ArticlesExpand — you get autocomplete
 const article = await getArticle(pb, "RECORD_ID", {

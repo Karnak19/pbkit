@@ -6,8 +6,8 @@ import fullSchema from "./fixtures/full-schema.json";
 const ir = parseJson(fullSchema);
 const ctx = {
   ir,
-  typesImport: "./types",
-  sdkImport: "./sdk",
+  typesImport: "./types.gen",
+  sdkImport: "./sdk.gen",
 };
 
 describe("generateTanstack", () => {
@@ -191,10 +191,10 @@ describe("tanstackPlugin", () => {
     expect(tanstackPlugin.name).toBe("@karnak19/pbkit-tanstack");
   });
 
-  test("generates options.ts file", () => {
+  test("generates tanstack.gen.ts file", () => {
     const files = tanstackPlugin.generate(ctx);
     expect(files).toHaveLength(1);
-    expect(files[0].path).toBe("options.ts");
+    expect(files[0].path).toBe("tanstack.gen.ts");
     expect(files[0].content).toContain("articleOptions");
   });
 });

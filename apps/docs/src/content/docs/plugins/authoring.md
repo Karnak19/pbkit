@@ -74,7 +74,7 @@ for (const collection of ctx.ir.collections) {
 
 ### `ctx.typesImport` / `ctx.sdkImport`
 
-Import paths to the generated `types.ts` and `sdk.ts`. Use these to create proper import statements in your output:
+Import paths to the generated `types.gen.ts` and `sdk.gen.ts`. Use these to create proper import statements in your output:
 
 ```ts
 const code = `import type { ArticlesRecord } from "${ctx.typesImport}"`

@@ -5,7 +5,7 @@ sidebar:
   order: 1
 ---
 
-pbkit generates `types.ts` containing TypeScript types for every non-excluded collection.
+pbkit generates `types.gen.ts` containing TypeScript types for every non-excluded collection.
 
 ## Base types
 

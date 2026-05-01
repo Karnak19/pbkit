@@ -36,8 +36,8 @@ bunx pbkit generate
 
 ```ts
 import PocketBase from "pocketbase"
-import { getArticle, createArticle } from "./generated/sdk"
-import type { ArticlesRecord } from "./generated/types"
+import { getArticle, createArticle } from "./generated/sdk.gen"
+import type { ArticlesRecord } from "./generated/types.gen"
 
 const pb = new PocketBase("https://my-pb.example.com")
 

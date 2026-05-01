@@ -49,8 +49,8 @@ With `expandDepth: 1`, `CommentsExpand` would only be `"article" | "author"`.
 The expand parameter in SDK functions is typed when the collection has expand paths:
 
 ```ts
-import { getArticle } from "./generated/sdk"
-import type { ArticlesExpand } from "./generated/types"
+import { getArticle } from "./generated/sdk.gen"
+import type { ArticlesExpand } from "./generated/types.gen"
 
 // Autocomplete suggests "author" or "categories"
 const result = await getArticle(pb, "ID", {

@@ -34,15 +34,16 @@ bunx pbkit generate
 
 This creates two files in `./src/generated`:
 
-- `types.ts` — TypeScript interfaces
-- `sdk.ts` — Typed CRUD functions
+- `types.gen.ts` — TypeScript interfaces
+- `client.gen.ts` — PocketBase client singleton
+- `sdk.gen.ts` — Typed CRUD functions
 
 ## 3. Use the generated SDK
 
 ```ts
 import PocketBase from "pocketbase"
-import { getArticle, listArticles, createArticle } from "./generated/sdk"
-import type { ArticlesRecord, ArticlesExpand } from "./generated/types"
+import { getArticle, listArticles, createArticle } from "./generated/sdk.gen"
+import type { ArticlesRecord, ArticlesExpand } from "./generated/types.gen"
 
 const pb = new PocketBase("https://my-pb.example.com")
 

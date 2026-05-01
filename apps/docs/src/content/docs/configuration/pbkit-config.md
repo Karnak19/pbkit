@@ -85,8 +85,8 @@ sdk: {
   pbImport: "pocketbase",
 
   // Custom import path for the generated types
-  // Default: "./types"
-  typesImport: "./types",
+  // Default: "./types.gen"
+  typesImport: "./types.gen",
 }
 ```
 

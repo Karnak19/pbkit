@@ -21,12 +21,12 @@ describe("generateSdk", () => {
   });
 
   test("imports types from default path", () => {
-    expect(output).toContain('from "./types"');
+    expect(output).toContain('from "./types.gen"');
   });
 
   test("imports custom types path", () => {
-    const custom = generateSdk(ir, { typesImport: "../generated/types" });
-    expect(custom).toContain('from "../generated/types"');
+    const custom = generateSdk(ir, { typesImport: "../generated/types.gen" });
+    expect(custom).toContain('from "../generated/types.gen"');
   });
 
   test("exports shared types", () => {

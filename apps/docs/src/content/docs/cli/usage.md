@@ -56,7 +56,8 @@ bunx pbkit generate --config ./configs/pbkit.config.ts
 
 ```
 $ bunx pbkit generate
-  src/generated/types.ts
-  src/generated/sdk.ts
-Generated 2 file(s) in 120ms
+  src/generated/types.gen.ts
+  src/generated/client.gen.ts
+  src/generated/sdk.gen.ts
+Generated 3 file(s) in 120ms
 ```

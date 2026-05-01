@@ -63,7 +63,7 @@ describe("resolveConfigPath", () => {
 describe("generateProject", () => {
   const fixturePath = resolve(import.meta.dir, "fixtures", "full-schema.json")
 
-  test("generates types.ts and sdk.ts from a file input", async () => {
+  test("generates .gen.ts files from a file input", async () => {
     const outDir = resolve(TMP, "generated")
     const config = {
       input: fixturePath,
@@ -73,14 +73,15 @@ describe("generateProject", () => {
     const result = await generateProject(config)
 
     expect(result.files.length).toBeGreaterThanOrEqual(2)
-    expect(existsSync(resolve(outDir, "types.ts"))).toBe(true)
-    expect(existsSync(resolve(outDir, "sdk.ts"))).toBe(true)
+    expect(existsSync(resolve(outDir, "types.gen.ts"))).toBe(true)
+    expect(existsSync(resolve(outDir, "client.gen.ts"))).toBe(true)
+    expect(existsSync(resolve(outDir, "sdk.gen.ts"))).toBe(true)
 
-    const types = readFileSync(resolve(outDir, "types.ts"), "utf-8")
+    const types = readFileSync(resolve(outDir, "types.gen.ts"), "utf-8")
     expect(types).toContain("UsersRecord")
     expect(types).toContain("ArticlesRecord")
 
-    const sdk = readFileSync(resolve(outDir, "sdk.ts"), "utf-8")
+    const sdk = readFileSync(resolve(outDir, "sdk.gen.ts"), "utf-8")
     expect(sdk).toContain("getArticle(")
     expect(sdk).toContain("createArticle(")
   })
@@ -94,8 +95,8 @@ describe("generateProject", () => {
     }
 
     const result = await generateProject(config)
-    expect(result.files.every(f => !f.path.includes("sdk.ts"))).toBe(true)
-    expect(existsSync(resolve(outDir, "sdk.ts"))).toBe(false)
+    expect(result.files.every(f => !f.path.includes("sdk.gen.ts"))).toBe(true)
+    expect(existsSync(resolve(outDir, "sdk.gen.ts"))).toBe(false)
   })
 
   test("runs plugins", async () => {
@@ -119,9 +120,9 @@ describe("generateProject", () => {
     }
 
     await generateProject(config)
-    const types = readFileSync(resolve(outDir, "types.ts"), "utf-8")
+    const types = readFileSync(resolve(outDir, "types.gen.ts"), "utf-8")
     expect(types).not.toContain("CommentsRecord")
-    const sdk = readFileSync(resolve(outDir, "sdk.ts"), "utf-8")
+    const sdk = readFileSync(resolve(outDir, "sdk.gen.ts"), "utf-8")
     expect(sdk).not.toContain("getComment(")
   })
 

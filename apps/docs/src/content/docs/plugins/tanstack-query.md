@@ -27,7 +27,7 @@ export default {
 }
 ```
 
-After running `bunx pbkit generate`, an `options.ts` file is created alongside `types.ts` and `sdk.ts`.
+After running `bunx pbkit generate`, a `tanstack.gen.ts` file is created alongside `types.gen.ts`, `client.gen.ts`, and `sdk.gen.ts`.
 
 ## Generated output
 
@@ -56,14 +56,14 @@ fullListArticlesQueryKey() // ["articles", "full", undefined] as const
 Pre-configured `queryOptions` for use with `useQuery`:
 
 ```ts
-import { articleOptions, articlesOptions } from "./generated/options"
+import { articleOptions, articlesOptions } from "./generated/tanstack.gen"
 import { useQuery } from "@tanstack/react-query"
 
 // Get a single record
-const { data } = useQuery(articleOptions(pb, "RECORD_ID"))
+const { data } = useQuery(articleOptions("RECORD_ID"))
 
 // List with pagination
-const { data } = useQuery(articlesOptions(pb, { page: 1, perPage: 20 }))
+const { data } = useQuery(articlesOptions({ page: 1, perPage: 20 }))
 ```
 
 ### Mutation options
@@ -71,16 +71,16 @@ const { data } = useQuery(articlesOptions(pb, { page: 1, perPage: 20 }))
 Pre-configured `mutationOptions` for use with `useMutation`:
 
 ```ts
-import { createArticleMutationOptions, updateArticleMutationOptions } from "./generated/options"
+import { createArticleMutationOptions, updateArticleMutationOptions } from "./generated/tanstack.gen"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 const queryClient = useQueryClient()
 
 // Create
-const createMut = useMutation(createArticleMutationOptions(pb))
+const createMut = useMutation(createArticleMutationOptions())
 
 // Update
-const updateMut = useMutation(updateArticleMutationOptions(pb))
+const updateMut = useMutation(updateArticleMutationOptions())
 ```
 
 ## Usage example
@@ -91,11 +91,11 @@ import {
   articlesOptions,
   articleQueryKey,
   createArticleMutationOptions,
-} from "./generated/options"
+} from "./generated/tanstack.gen"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
-function ArticleList({ pb }) {
-  const { data, isLoading } = useQuery(articlesOptions(pb, { page: 1, perPage: 20 }))
+function ArticleList() {
+  const { data, isLoading } = useQuery(articlesOptions({ page: 1, perPage: 20 }))
 
   if (isLoading) return <p>Loading...</p>
 
@@ -108,10 +108,10 @@ function ArticleList({ pb }) {
   )
 }
 
-function CreateArticle({ pb }) {
+function CreateArticle() {
   const queryClient = useQueryClient()
   const createMut = useMutation({
-    ...createArticleMutationOptions(pb),
+    ...createArticleMutationOptions(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["articles"] })
     },
@@ -133,7 +133,7 @@ function CreateArticle({ pb }) {
 Unlike hook-based approaches, the plugin gives you query key helpers for manual cache invalidation. This gives you full control over when and how to invalidate:
 
 ```ts
-import { articleQueryKey } from "./generated/options"
+import { articleQueryKey } from "./generated/tanstack.gen"
 
 const queryClient = useQueryClient()
 

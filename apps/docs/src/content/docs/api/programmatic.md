@@ -73,7 +73,7 @@ const typesCode = generate(ir, {
 import { generateSdk } from "@karnak19/pbkit"
 
 const sdkCode = generateSdk(ir, {
-  typesImport: "./types",
+  typesImport: "./types.gen",
   pbImport: "pocketbase",
   collections: { _superusers: { exclude: true } },
 })

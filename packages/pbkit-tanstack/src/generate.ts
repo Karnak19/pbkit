@@ -188,7 +188,7 @@ export const tanstackPlugin: PbkitPlugin = {
   generate(ctx: PluginContext): PluginOutputFile[] {
     return [
       {
-        path: "options.ts",
+        path: "tanstack.gen.ts",
         content: generateTanstack(ctx.ir, ctx),
       },
     ];

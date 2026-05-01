@@ -45,13 +45,13 @@ export async function generateProject(config: PbkitConfig): Promise<GenerateResu
 
   const files: { path: string; content: string }[] = [];
 
-  const typesPath = resolve(outDir, "types.ts");
-  const typesRel = "./types";
+  const typesPath = resolve(outDir, "types.gen.ts");
+  const typesRel = "./types.gen";
   const typesContent = generate(ir, { ...config.types, collections: config.collections });
   files.push({ path: typesPath, content: typesContent });
 
   if (config.sdk?.enabled !== false) {
-    const sdkRel = "./sdk";
+    const sdkRel = "./sdk.gen";
     const clientContent = generateClientFile(config.sdk);
     files.push({ path: resolve(outDir, "client.gen.ts"), content: clientContent });
     const sdkContent = generateSdk(ir, {
@@ -59,11 +59,11 @@ export async function generateProject(config: PbkitConfig): Promise<GenerateResu
       typesImport: typesRel,
       collections: config.collections,
     });
-    files.push({ path: resolve(outDir, "sdk.ts"), content: sdkContent });
+    files.push({ path: resolve(outDir, "sdk.gen.ts"), content: sdkContent });
   }
 
   if (config.plugins?.length) {
-    const sdkRel = "./sdk";
+    const sdkRel = "./sdk.gen";
     for (const plugin of config.plugins) {
       const pluginFiles = plugin.generate({
         ir,

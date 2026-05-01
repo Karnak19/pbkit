@@ -222,7 +222,7 @@ export function generateSdk(
   ir: SchemaIR,
   options: SdkGenerateOptions & { collections?: CollectionsConfig } = {},
 ): string {
-  const typesImport = options.typesImport ?? "./types";
+  const typesImport = options.typesImport ?? "./types.gen";
 
   const cols = ir.collections.filter((c) => !isCollectionExcluded(c.name, options.collections));
 

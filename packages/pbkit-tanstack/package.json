@@ -11,12 +11,17 @@
       "import": "./dist/index.js"
     }
   },
+  "files": ["dist"],
   "scripts": {
     "build": "bun build src/index.ts --outdir=dist --target=node && tsc --emitDeclarationOnly",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "bun run build"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "license": "MIT",
   "peerDependencies": {

@@ -5,11 +5,16 @@
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
     "build": "turbo run build",
+    "changeset": "changeset",
+    "ci": "turbo run lint typecheck test build",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "version-packages": "changeset version",
+    "release": "turbo run build --filter=./packages/* && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "turbo": "^2.5.0",
     "typescript": "^6.0.0"
   }

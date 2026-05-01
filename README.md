@@ -221,6 +221,28 @@ pbkit generate --config ./path/to/config.ts
 pbkit --help
 ```
 
+## Development
+
+```bash
+bun install
+bun run lint
+bun run typecheck
+bun run test
+bun run build
+```
+
+Pull requests and pushes to `main` run the same checks in GitHub Actions.
+
+## Releases
+
+This repo uses Changesets for package versioning and npm publishing.
+
+```bash
+bun run changeset
+```
+
+Merge the generated changeset with your feature. On `main`, the release workflow opens a version PR. Merging that PR publishes the public packages to npm using the `NPM_TOKEN` repository secret. The docs deploy workflow continues to publish `apps/docs` to GitHub Pages.
+
 ## Programmatic API
 
 ```ts

@@ -17,14 +17,24 @@ function singularize(name: string): string {
   return name;
 }
 
+function lowerFirst(name: string): string {
+  return name.charAt(0).toLowerCase() + name.slice(1);
+}
+
+function listHelperName(plural: string, singular: string): string {
+  const base = lowerFirst(plural);
+  return plural === singular ? `list${plural}` : base;
+}
+
 function queryKeyHelpers(col: CollectionSchema, collections?: CollectionsConfig): string[] {
   const p = pascalCase(col.name);
   const s = pascalCase(singularize(col.name));
+  const listName = listHelperName(p, s);
   const c = JSON.stringify(col.name);
   const lines: string[] = [];
   const op = (name: OperationName) => isOperationEnabled(col.name, name, collections);
 
-  lines.push(`export function ${s.toLowerCase()}QueryKey(id: string) {`);
+  lines.push(`export function ${lowerFirst(s)}QueryKey(id: string) {`);
   lines.push(`  return [${c}, id] as const`);
   lines.push("}");
   lines.push("");
@@ -37,7 +47,7 @@ function queryKeyHelpers(col: CollectionSchema, collections?: CollectionsConfig)
   }
 
   if (op("list")) {
-    lines.push(`export function ${p.toLowerCase()}QueryKey(params?: ListParams) {`);
+    lines.push(`export function ${listName}QueryKey(params?: ListParams) {`);
     lines.push(`  return [${c}, params] as const`);
     lines.push("}");
     lines.push("");
@@ -56,12 +66,13 @@ function queryKeyHelpers(col: CollectionSchema, collections?: CollectionsConfig)
 function queryOptions_(col: CollectionSchema, collections?: CollectionsConfig): string[] {
   const p = pascalCase(col.name);
   const s = pascalCase(singularize(col.name));
+  const listName = listHelperName(p, s);
   const c = JSON.stringify(col.name);
   const lines: string[] = [];
   const op = (name: OperationName) => isOperationEnabled(col.name, name, collections);
 
   if (op("get")) {
-    lines.push(`export function ${s.toLowerCase()}Options(id: string, options?: RequestOptions) {`);
+    lines.push(`export function ${lowerFirst(s)}Options(id: string, options?: RequestOptions) {`);
     lines.push("  return queryOptions({");
     lines.push(`    queryKey: [${c}, id],`);
     lines.push(`    queryFn: () => get${s}(id, options),`);
@@ -79,7 +90,7 @@ function queryOptions_(col: CollectionSchema, collections?: CollectionsConfig): 
     lines.push("");
   }
   if (op("list")) {
-    lines.push(`export function ${p.toLowerCase()}Options(params?: ListParams) {`);
+    lines.push(`export function ${listName}Options(params?: ListParams) {`);
     lines.push("  return queryOptions({");
     lines.push(`    queryKey: [${c}, params],`);
     lines.push(`    queryFn: () => list${p}(params),`);

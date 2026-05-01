@@ -1,0 +1,17 @@
+{
+  "name": "@karnak19/playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "generate": "bun --filter @karnak19/pbkit build && bun --filter @karnak19/pbkit-tanstack build && pbkit generate --config pbkit.config.ts"
+  },
+  "dependencies": {
+    "@karnak19/pbkit": "workspace:*",
+    "@karnak19/pbkit-tanstack": "workspace:*",
+    "@tanstack/query-core": "^5.0.0"
+  },
+  "devDependencies": {
+    "vite": "^6.4.2"
+  }
+}

@@ -84,6 +84,41 @@ describe("generateTanstack", () => {
     expect(output).toContain("export function usersQueryKey(params?: ListParams)");
   });
 
+  test("avoids query helper name collisions for non-plural collection names", () => {
+    const schema = [
+      {
+        id: "_pbc_beta_feedback",
+        name: "beta_feedback",
+        type: "base",
+        system: false,
+        fields: [
+          {
+            id: "text_id",
+            name: "id",
+            type: "text",
+            system: true,
+            required: true,
+          },
+          {
+            id: "text_title",
+            name: "title",
+            type: "text",
+            system: false,
+            required: true,
+          },
+        ],
+      },
+    ];
+    const generated = generateTanstack(parseJson(schema), ctx);
+
+    expect(generated).toContain("export function betaFeedbackQueryKey(id: string)");
+    expect(generated).toContain("export function listBetaFeedbackQueryKey(params?: ListParams)");
+    expect(generated).toContain("export function betaFeedbackOptions(id: string");
+    expect(generated).toContain("export function listBetaFeedbackOptions(params?: ListParams)");
+    expect(generated.match(/export function betaFeedbackQueryKey/g)).toHaveLength(1);
+    expect(generated.match(/export function betaFeedbackOptions/g)).toHaveLength(1);
+  });
+
   test("query options use correct query keys", () => {
     expect(output).toContain('queryKey: ["articles", id]');
     expect(output).toContain('queryKey: ["articles", "first", filter]');

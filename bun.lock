@@ -19,11 +19,22 @@
         "sharp": "^0.33.0",
       },
     },
+    "apps/playground": {
+      "name": "@karnak19/playground",
+      "dependencies": {
+        "@karnak19/pbkit": "workspace:*",
+        "@karnak19/pbkit-tanstack": "workspace:*",
+        "@tanstack/query-core": "^5.0.0",
+      },
+      "devDependencies": {
+        "vite": "^6.4.2",
+      },
+    },
     "packages/pbkit": {
       "name": "@karnak19/pbkit",
       "version": "0.0.1",
       "bin": {
-        "pbkit": "./src/cli/index.ts",
+        "pbkit": "./dist/cli/index.js",
       },
       "devDependencies": {
         "@types/bun": "^1.3.13",
@@ -231,6 +242,8 @@
     "@karnak19/pbkit": ["@karnak19/pbkit@workspace:packages/pbkit"],
 
     "@karnak19/pbkit-tanstack": ["@karnak19/pbkit-tanstack@workspace:packages/pbkit-tanstack"],
+
+    "@karnak19/playground": ["@karnak19/playground@workspace:apps/playground"],
 
     "@manypkg/find-root": ["@manypkg/find-root@1.1.0", "", { "dependencies": { "@babel/runtime": "^7.5.5", "@types/node": "^12.7.1", "find-up": "^4.1.0", "fs-extra": "^8.1.0" } }, "sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA=="],
 

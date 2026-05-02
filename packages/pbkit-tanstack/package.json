@@ -1,6 +1,6 @@
 {
   "name": "@karnak19/pbkit-tanstack",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "TanStack Query options plugin for pbkit",
   "homepage": "https://karnak19.github.io/pbkit/",
   "repository": {

@@ -1,5 +1,13 @@
 # @karnak19/pbkit-tanstack
 
+## 0.1.2
+
+### Patch Changes
+
+- f4af90a: Update package homepage metadata and expand the pbkit package README.
+- Updated dependencies [f4af90a]
+  - @karnak19/pbkit@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

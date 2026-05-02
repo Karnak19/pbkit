@@ -2,6 +2,15 @@
   "name": "@karnak19/pbkit",
   "version": "0.1.0",
   "description": "PocketBase code generation toolkit",
+  "homepage": "https://github.com/Karnak19/pbkit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Karnak19/pbkit.git",
+    "directory": "packages/pbkit"
+  },
+  "bugs": {
+    "url": "https://github.com/Karnak19/pbkit/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

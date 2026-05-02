@@ -2,6 +2,15 @@
   "name": "@karnak19/pbkit-tanstack",
   "version": "0.1.0",
   "description": "TanStack Query options plugin for pbkit",
+  "homepage": "https://github.com/Karnak19/pbkit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Karnak19/pbkit.git",
+    "directory": "packages/pbkit-tanstack"
+  },
+  "bugs": {
+    "url": "https://github.com/Karnak19/pbkit/issues"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,7 +21,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "bun build src/index.ts --outdir=dist --target=node && tsc --emitDeclarationOnly",

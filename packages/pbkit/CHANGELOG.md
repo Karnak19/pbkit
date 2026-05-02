@@ -1,5 +1,11 @@
 # @karnak19/pbkit
 
+## 0.1.2
+
+### Patch Changes
+
+- f4af90a: Update package homepage metadata and expand the pbkit package README.
+
 ## 0.1.1
 
 ### Patch Changes

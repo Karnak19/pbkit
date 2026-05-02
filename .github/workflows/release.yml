@@ -18,6 +18,9 @@ jobs:
   release:
     name: Version and Publish
     runs-on: ubuntu-latest
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -34,6 +37,14 @@ jobs:
       - run: bun install --frozen-lockfile
 
       - run: bun run ci
+
+      - name: Configure npm auth
+        run: |
+          npm config set @karnak19:registry https://registry.npmjs.org
+          npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+
+      - name: Verify npm auth
+        run: npm whoami
 
       - name: Create release PR or publish packages
         uses: changesets/action@v1

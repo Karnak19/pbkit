@@ -1,5 +1,11 @@
 # @karnak19/pbkit
 
+## 0.1.3
+
+### Patch Changes
+
+- 485fead: Update package README examples to show the current generated client and SDK API.
+
 ## 0.1.2
 
 ### Patch Changes

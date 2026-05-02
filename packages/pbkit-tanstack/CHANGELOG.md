@@ -1,5 +1,13 @@
 # @karnak19/pbkit-tanstack
 
+## 0.1.3
+
+### Patch Changes
+
+- 485fead: Update package README examples to show the current generated client and SDK API.
+- Updated dependencies [485fead]
+  - @karnak19/pbkit@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

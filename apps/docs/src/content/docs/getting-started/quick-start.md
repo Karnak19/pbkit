@@ -14,6 +14,9 @@ Create `pbkit.config.ts` in your project root:
 export default {
   input: "https://my-pb.example.com",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pb.example.com",
+  },
 }
 ```
 
@@ -23,6 +26,9 @@ You can also point to an exported JSON schema:
 export default {
   input: "./pb_schema.json",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pb.example.com",
+  },
 }
 ```
 
@@ -32,7 +38,7 @@ export default {
 bunx pbkit generate
 ```
 
-This creates two files in `./src/generated`:
+This creates generated files in `./src/generated`:
 
 - `types.gen.ts` — TypeScript interfaces
 - `client.gen.ts` — PocketBase client singleton
@@ -41,29 +47,40 @@ This creates two files in `./src/generated`:
 ## 3. Use the generated SDK
 
 ```ts
-import PocketBase from "pocketbase"
 import { getArticle, listArticles, createArticle } from "./generated/sdk.gen"
-import type { ArticlesRecord, ArticlesExpand } from "./generated/types.gen"
-
-const pb = new PocketBase("https://my-pb.example.com")
+import type { ArticlesCreate, ArticlesRecord } from "./generated/types.gen"
 
 // Get a single record
-const article = await getArticle(pb, "RECORD_ID")
+const article: ArticlesRecord = await getArticle("RECORD_ID")
 
 // Expand relations with autocomplete
-const withAuthor = await getArticle(pb, "RECORD_ID", {
-  expand: "author", // typed to ArticlesExpand
+const withAuthor = await getArticle("RECORD_ID", {
+  expand: "author",
 })
 
 // List with pagination
-const page = await listArticles(pb, { page: 1, perPage: 20 })
+const page = await listArticles({ page: 1, perPage: 20 })
 
 // Create
-const newArticle = await createArticle(pb, {
+const draft: ArticlesCreate = {
   title: "Hello",
   status: "draft",
   author: "USER_ID",
-})
+}
+
+const newArticle = await createArticle(draft)
+```
+
+By default the generated SDK uses the `client` exported from `client.gen.ts`.
+Pass a client override when you need a different PocketBase instance:
+
+```ts
+import PocketBase from "pocketbase"
+import { getArticle } from "./generated/sdk.gen"
+
+const pb = new PocketBase("https://my-pb.example.com")
+
+await getArticle("RECORD_ID", undefined, { client: pb })
 ```
 
 ## Watch mode

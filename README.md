@@ -16,7 +16,7 @@ Given a PocketBase schema, pbkit generates:
 ### 1. Install
 
 ```bash
-bun add @karnak19/pbkit
+bun add @karnak19/pbkit pocketbase
 ```
 
 ### 2. Create a config
@@ -26,6 +26,9 @@ bun add @karnak19/pbkit
 export default {
   input: "https://my-pb.example.com",   // URL → live API, or path → JSON export
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pb.example.com",
+  },
 }
 ```
 
@@ -38,29 +41,40 @@ bunx pbkit generate
 ### 4. Use
 
 ```ts
-import PocketBase from "pocketbase"
 import { getArticle, listArticles, createArticle } from "./generated/sdk.gen"
-import type { ArticlesRecord, ArticlesExpand } from "./generated/types.gen"
-
-const pb = new PocketBase("https://my-pb.example.com")
+import type { ArticlesCreate, ArticlesRecord } from "./generated/types.gen"
 
 // Get a single record
-const article = await getArticle(pb, "RECORD_ID")
+const article: ArticlesRecord = await getArticle("RECORD_ID")
 
 // Expand relations with autocomplete
-const articleWithAuthor = await getArticle(pb, "RECORD_ID", {
-  expand: "author",  // typed to ArticlesExpand
+const articleWithAuthor = await getArticle("RECORD_ID", {
+  expand: "author",
 })
 
 // List with pagination
-const page = await listArticles(pb, { page: 1, perPage: 20 })
+const page = await listArticles({ page: 1, perPage: 20 })
 
 // Create
-const newArticle = await createArticle(pb, {
+const draft: ArticlesCreate = {
   title: "Hello",
   status: "draft",
   author: "USER_ID",
-})
+}
+
+const newArticle = await createArticle(draft)
+```
+
+The generated SDK uses the `client` exported from `client.gen.ts`. Pass a client
+override when needed:
+
+```ts
+import PocketBase from "pocketbase"
+import { getArticle } from "./generated/sdk.gen"
+
+const pb = new PocketBase("https://my-pb.example.com")
+
+await getArticle("RECORD_ID", undefined, { client: pb })
 ```
 
 ## Configuration
@@ -91,6 +105,7 @@ export default {
   sdk: {
     enabled: true,            // Set false to skip SDK generation
     pbImport: "pocketbase",   // Custom PocketBase import path
+    baseUrl: "https://my-pb.example.com", // Runtime URL for client.gen.ts
     typesImport: "./types.gen",   // Custom types import path
   },
 
@@ -152,19 +167,19 @@ export type CollectionName = "users" | "categories" | "articles" | "comments"
 
 ```ts
 // Typed CRUD per collection
-getArticle(pb, id, options?)           // options.expand is typed to ArticlesExpand
-getFirstArticle(pb, filter, options?)
-listArticles(pb, params?)
-getFullListArticles(pb, params?)
-createArticle(pb, data: ArticlesCreate)
-updateArticle(pb, id, data: ArticlesUpdate)
-deleteArticle(pb, id): Promise<true>
+getArticle(id, options?, opts?)           // options.expand is typed to ArticlesExpand
+getFirstArticle(filter, options?, opts?)
+listArticles(params?, opts?)
+getFullListArticles(params?, opts?)
+createArticle(data: ArticlesCreate, opts?)
+updateArticle(id, data: ArticlesUpdate, opts?)
+deleteArticle(id, opts?): Promise<true>
 
 // Auth methods for auth collections
-authUserWithPassword(pb, email, password)
-authUserWithOAuth2(pb, provider, code, verifier, redirect)
-requestUserPasswordReset(pb, email)
-confirmUserVerification(pb, token)
+authUserWithPassword(usernameOrEmail, password)
+authUserWithOAuth2(provider, code, verifier, redirect)
+requestUserPasswordReset(email)
+confirmUserVerification(token)
 // ...etc
 ```
 
@@ -181,6 +196,9 @@ import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
 export default {
   input: "https://my-pb.example.com",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pb.example.com",
+  },
   plugins: [tanstackPlugin],
 }
 ```
@@ -206,10 +224,10 @@ const queryClient = useQueryClient()
 queryClient.invalidateQueries({ queryKey: articleQueryKey("RECORD_ID") })
 
 // Mutation options
-const createMut = useMutation(createArticleMutation(pb))
+const createMut = useMutation(createArticleMutationOptions())
 createMut.mutate({ title: "New article", status: "draft" })
 
-const updateMut = useMutation(updateArticleMutation(pb))
+const updateMut = useMutation(updateArticleMutationOptions())
 updateMut.mutate({ id: "RECORD_ID", data: { title: "Updated" } })
 ```
 

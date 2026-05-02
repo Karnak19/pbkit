@@ -10,7 +10,7 @@ The `@karnak19/pbkit-tanstack` package provides a plugin that generates framewor
 ## Install
 
 ```bash
-bun add @karnak19/pbkit-tanstack
+bun add @karnak19/pbkit-tanstack @tanstack/query-core
 ```
 
 ## Setup
@@ -23,6 +23,9 @@ import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
 export default {
   input: "https://my-pb.example.com",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pb.example.com",
+  },
   plugins: [tanstackPlugin],
 }
 ```

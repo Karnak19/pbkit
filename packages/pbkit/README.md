@@ -26,6 +26,9 @@ import type { PbkitConfig } from "@karnak19/pbkit"
 export default {
   input: "./pb_schema.json",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pocketbase.example.com",
+  },
 } satisfies PbkitConfig
 ```
 
@@ -35,6 +38,9 @@ export default {
 export default {
   input: "https://my-pocketbase.example.com",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pocketbase.example.com",
+  },
 } satisfies PbkitConfig
 ```
 
@@ -99,6 +105,7 @@ export default {
   sdk: {
     enabled: true,
     pbImport: "pocketbase",
+    baseUrl: "https://my-pocketbase.example.com",
     typesImport: "./types.gen",
   },
 
@@ -134,6 +141,9 @@ import type { PbkitConfig } from "@karnak19/pbkit"
 export default {
   input: "./pb_schema.json",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pocketbase.example.com",
+  },
   plugins: [tanstackPlugin],
 } satisfies PbkitConfig
 ```

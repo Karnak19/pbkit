@@ -13,6 +13,9 @@ import type { PbkitConfig } from "@karnak19/pbkit"
 export default {
   input: "https://my-pb.example.com",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pb.example.com",
+  },
 } satisfies PbkitConfig
 ```
 
@@ -84,6 +87,10 @@ sdk: {
   // Default: "pocketbase"
   pbImport: "pocketbase",
 
+  // Base URL used by the generated client in client.gen.ts
+  // Default: ""
+  baseUrl: "https://my-pb.example.com",
+
   // Custom import path for the generated types
   // Default: "./types.gen"
   typesImport: "./types.gen",
@@ -128,6 +135,7 @@ export default {
   sdk: {
     enabled: true,
     pbImport: "pocketbase",
+    baseUrl: "https://my-pb.example.com",
   },
 
   collections: {

@@ -20,6 +20,9 @@ import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
 export default {
   input: "./pb_schema.json",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pocketbase.example.com",
+  },
   plugins: [tanstackPlugin],
 }
 ```

@@ -70,8 +70,11 @@ const typesCode = generate(ir, {
 ### Generate SDK only
 
 ```ts
-import { generateSdk } from "@karnak19/pbkit"
+import { generateClientFile, generateSdk } from "@karnak19/pbkit"
 
+const clientCode = generateClientFile({
+  baseUrl: "https://my-pb.example.com",
+})
 const sdkCode = generateSdk(ir, {
   typesImport: "./types.gen",
   pbImport: "pocketbase",
@@ -87,6 +90,9 @@ import { generateProject } from "@karnak19/pbkit"
 const result = await generateProject({
   input: "https://my-pb.example.com",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pb.example.com",
+  },
   plugins: [],
 })
 

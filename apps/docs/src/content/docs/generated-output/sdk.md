@@ -6,6 +6,9 @@ sidebar:
 ---
 
 pbkit generates `sdk.gen.ts` with fully typed functions for every non-excluded collection.
+The generated functions use the `client` exported from `client.gen.ts` by
+default. Set `sdk.baseUrl` in `pbkit.config.ts` to initialize that client with
+your PocketBase URL.
 
 ## CRUD functions
 
@@ -15,25 +18,28 @@ For each collection (e.g. `articles`), the following functions are generated bas
 
 ```ts
 // Get a single record by ID
-getArticle(pb: PbClient, id: string, options?: RequestOptions): Promise<ArticlesRecord>
+getArticle(id: string, options?: RequestOptions, opts?: { client?: PbClient }): Promise<ArticlesRecord>
 
 // Get the first record matching a filter
-getFirstArticle(pb: PbClient, filter: string, options?: RequestOptions): Promise<ArticlesRecord>
+getFirstArticle(filter: string, options?: RequestOptions, opts?: { client?: PbClient }): Promise<ArticlesRecord>
 
 // Paginated list
-listArticles(pb: PbClient, params?: ListParams): Promise<ListResult<ArticlesRecord>>
+listArticles(params?: ListParams, opts?: { client?: PbClient }): Promise<ListResult<ArticlesRecord>>
 
 // Get all records
-getFullListArticles(pb: PbClient, params?: ListParams): Promise<ArticlesRecord[]>
+getFullListArticles(params?: ListParams, opts?: { client?: PbClient }): Promise<ArticlesRecord[]>
 ```
 
 ### Write operations
 
 ```ts
-createArticle(pb: PbClient, data: ArticlesCreate): Promise<ArticlesRecord>
-updateArticle(pb: PbClient, id: string, data: ArticlesUpdate): Promise<ArticlesRecord>
-deleteArticle(pb: PbClient, id: string): Promise<true>
+createArticle(data: ArticlesCreate, opts?: { client?: PbClient }): Promise<ArticlesRecord>
+updateArticle(id: string, data: ArticlesUpdate, opts?: { client?: PbClient }): Promise<ArticlesRecord>
+deleteArticle(id: string, opts?: { client?: PbClient }): Promise<true>
 ```
+
+Pass `{ client }` as the final argument to use a different PocketBase instance
+for a specific call.
 
 ## Typed expand
 
@@ -43,7 +49,7 @@ When a collection has relations, the `expand` option is typed to the collection'
 import { getArticle } from "./generated/sdk.gen"
 
 // expand is typed to ArticlesExpand — you get autocomplete
-const article = await getArticle(pb, "RECORD_ID", {
+const article = await getArticle("RECORD_ID", {
   expand: "author",
 })
 ```
@@ -54,24 +60,24 @@ Auth collections (`type: "auth"`) get additional functions:
 
 ```ts
 // Authentication
-authUserWithPassword(pb, email, password)
-authUserWithOAuth2(pb, provider, code, codeVerifier, redirectUrl)
-authUserWithOTP(pb, otpId, password)
+authUserWithPassword(usernameOrEmail, password)
+authUserWithOAuth2(provider, code, codeVerifier, redirectUrl)
+authUserWithOTP(otpId, password)
 
 // Password reset
-requestUserPasswordReset(pb, email)
-confirmUserPasswordReset(pb, token, password, passwordConfirm)
+requestUserPasswordReset(email)
+confirmUserPasswordReset(token, password, passwordConfirm)
 
 // Email verification
-requestUserVerification(pb, email)
-confirmUserVerification(pb, token)
+requestUserVerification(email)
+confirmUserVerification(token)
 
 // Email change
-requestUserEmailChange(pb, newEmail)
-confirmUserEmailChange(pb, token, password)
+requestUserEmailChange(newEmail)
+confirmUserEmailChange(token, password)
 
 // Token refresh
-refreshUser(pb)
+refreshUser()
 ```
 
 ## Shared types

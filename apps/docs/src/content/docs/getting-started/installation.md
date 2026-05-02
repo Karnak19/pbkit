@@ -13,7 +13,7 @@ sidebar:
 ## Install
 
 ```bash
-bun add @karnak19/pbkit
+bun add @karnak19/pbkit pocketbase
 ```
 
 ## Verify

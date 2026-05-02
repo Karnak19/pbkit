@@ -53,7 +53,7 @@ import { getArticle } from "./generated/sdk.gen"
 import type { ArticlesExpand } from "./generated/types.gen"
 
 // Autocomplete suggests "author" or "categories"
-const result = await getArticle(pb, "ID", {
+const result = await getArticle("ID", {
   expand: "author" as ArticlesExpand,
 })
 ```

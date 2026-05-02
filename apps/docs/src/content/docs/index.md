@@ -27,6 +27,9 @@ hero:
 export default {
   input: "https://my-pb.example.com",
   output: "./src/generated",
+  sdk: {
+    baseUrl: "https://my-pb.example.com",
+  },
 }
 ```
 
@@ -35,12 +38,16 @@ bunx pbkit generate
 ```
 
 ```ts
-import PocketBase from "pocketbase"
 import { getArticle, createArticle } from "./generated/sdk.gen"
 import type { ArticlesRecord } from "./generated/types.gen"
 
-const pb = new PocketBase("https://my-pb.example.com")
+const article: ArticlesRecord = await getArticle("RECORD_ID", {
+  expand: "author",
+})
 
-const article: ArticlesRecord = await getArticle(pb, "RECORD_ID")
-const created = await createArticle(pb, { title: "Hello", status: "draft" })
+const created = await createArticle({
+  title: "Hello",
+  status: "draft",
+  author: "USER_ID",
+})
 ```

@@ -7,13 +7,14 @@ metadata:
 
 # pbkit
 
-Use pbkit when a project needs type-safe TypeScript access to a PocketBase backend. pbkit reads a PocketBase schema from a live API or exported JSON file and generates typed records, create/update payloads, SDK functions, and optional plugin output.
+Use pbkit when a project needs type-safe TypeScript access to a PocketBase backend. pbkit reads a PocketBase schema from a live API or exported JSON file and generates typed records, create/update payloads, SDK functions, a client singleton, and optional plugin output.
 
 ## What pbkit Generates
 
-- `types.ts`: TypeScript types for each non-excluded collection, including `XxxRecord`, `XxxCreate`, `XxxUpdate`, `XxxExpand`, and `CollectionName`.
-- `sdk.ts`: typed CRUD functions wrapping the official `pocketbase` JavaScript SDK.
-- `options.ts`: TanStack Query output when using `@karnak19/pbkit-tanstack`.
+- `types.gen.ts`: TypeScript types for each non-excluded collection, including `XxxRecord`, `XxxCreate`, `XxxUpdate`, `XxxExpand`, and `CollectionName`.
+- `client.gen.ts`: Default PocketBase client singleton and `PbClient` type export.
+- `sdk.gen.ts`: Typed CRUD functions using the singleton client (with optional per-call override).
+- `tanstack.gen.ts`: TanStack Query options when using `@karnak19/pbkit-tanstack`.
 
 ## Install
 
@@ -33,9 +34,10 @@ Install the framework adapter used by the app as well, such as `@tanstack/react-
 
 ## Configuration
 
-Create `pbkit.config.ts` in the project root:
+Create `pbkit.config.ts` in the project root (also supports `.js` and `.mjs`):
 
 ```ts
+import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
 import type { PbkitConfig } from "@karnak19/pbkit"
 
 export default {
@@ -52,7 +54,8 @@ export default {
   sdk: {
     enabled: true,
     pbImport: "pocketbase",
-    typesImport: "./types",
+    typesImport: "./types.gen",
+    // baseUrl: "https://my-pb.example.com", // sets PocketBase URL in client.gen.ts
   },
 
   collections: {
@@ -61,7 +64,7 @@ export default {
     articles: { operations: { create: false, delete: false } },
   },
 
-  plugins: [],
+  plugins: [tanstackPlugin],
 } satisfies PbkitConfig
 ```
 
@@ -99,46 +102,74 @@ bunx pbkit generate --watch
 bunx pbkit generate --config ./path/to/pbkit.config.ts
 ```
 
+Short flags: `-c` for `--config`, `-w` for `--watch`.
+
 The npm-equivalent commands are:
 
 ```bash
 npx pbkit generate
-npx pbkit generate --watch
-npx pbkit generate --config ./path/to/pbkit.config.ts
+npx pbkit generate -w
+npx pbkit generate -c ./path/to/pbkit.config.ts
 ```
 
 Watch mode polls the schema source and regenerates output when it changes.
 
-## SDK Usage Patterns
+## Client Singleton
+
+pbkit generates a default PocketBase client in `client.gen.ts`:
 
 ```ts
+// client.gen.ts — generated
 import PocketBase from "pocketbase"
-import { createArticle, getArticle, listArticles, updateArticle } from "./generated/sdk"
-import type { ArticlesCreate } from "./generated/types"
+export const client = new PocketBase("") // baseUrl set via sdk.baseUrl in config
+export type PbClient = PocketBase
+```
 
-const pb = new PocketBase("https://my-pb.example.com")
+### Multi-client setups
 
-const article = await getArticle(pb, "RECORD_ID")
+When the app uses multiple PB clients (browser, server, admin), leave `sdk.baseUrl` empty and pass a specific client per call using the `opts` override:
 
-const articleWithAuthor = await getArticle(pb, "RECORD_ID", {
+```ts
+import { client, type PbClient } from "./generated/client.gen"
+
+const pbServer = new PocketBase("http://internal-pb:8080")
+const pbAdmin = new PocketBase("http://internal-pb:8080")
+pbAdmin.autoCancellation(false)
+```
+
+## SDK Usage Patterns
+
+Generated SDK functions use the singleton by default and accept an optional `{ client }` override:
+
+```ts
+import { getArticle, listArticles, createArticle, updateArticle } from "./generated/sdk.gen"
+import type { ArticlesCreate } from "./generated/types.gen"
+
+// Uses the default singleton client
+const article = await getArticle("RECORD_ID")
+
+const articleWithAuthor = await getArticle("RECORD_ID", {
   expand: "author",
 })
 
-const page = await listArticles(pb, {
+const page = await listArticles({
   page: 1,
   perPage: 20,
   filter: "status = 'published'",
   sort: "-created",
 })
 
+// Create / Update
 const data: ArticlesCreate = {
   title: "Hello",
   status: "draft",
   author: "USER_ID",
 }
+const created = await createArticle(data)
+const updated = await updateArticle(created.id, { status: "published" })
 
-const created = await createArticle(pb, data)
-const updated = await updateArticle(pb, created.id, { status: "published" })
+// Override with a specific client
+const article = await getArticle("RECORD_ID", undefined, { client: pbServer })
 ```
 
 Generated auth collections include helpers named from the singular collection name. For a `users` collection, pbkit generates helpers such as `authUserWithPassword`, `authUserWithOAuth2`, `authUserWithOTP`, `requestUserPasswordReset`, `confirmUserPasswordReset`, `requestUserVerification`, `confirmUserVerification`, `requestUserEmailChange`, `confirmUserEmailChange`, and `refreshUser`. For an `admins` collection, those names use `Admin` instead of `User`.
@@ -157,7 +188,7 @@ export default {
 }
 ```
 
-The plugin generates framework-agnostic TanStack Query options and query key helpers in `options.ts`:
+The plugin generates framework-agnostic TanStack Query options and query key helpers in `tanstack.gen.ts`. Options call the SDK functions internally (using the singleton), so no `pb` argument is needed:
 
 ```tsx
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -166,14 +197,14 @@ import {
   articleQueryKey,
   articlesOptions,
   createArticleMutationOptions,
-} from "./generated/options"
+} from "./generated/tanstack.gen"
 
-const { data: article } = useQuery(articleOptions(pb, "RECORD_ID"))
-const { data: articles } = useQuery(articlesOptions(pb, { page: 1, perPage: 20 }))
+const { data: article } = useQuery(articleOptions("RECORD_ID"))
+const { data: articles } = useQuery(articlesOptions({ page: 1, perPage: 20 }))
 
 const queryClient = useQueryClient()
 const createArticleMutation = useMutation({
-  ...createArticleMutationOptions(pb),
+  ...createArticleMutationOptions(),
   onSuccess: created => {
     queryClient.invalidateQueries({ queryKey: articleQueryKey(created.id) })
     queryClient.invalidateQueries({ queryKey: ["articles"] })
@@ -199,13 +230,15 @@ Prefer the generated query key helpers for precise cache invalidation when avail
 
 ## Pitfalls
 
-- Install `pocketbase` in the consuming app; generated SDK files import it unless `sdk.pbImport` is customized.
+- Install `pocketbase` in the consuming app; `client.gen.ts` imports it unless `sdk.pbImport` is customized.
 - Do not edit generated files directly. Update `pbkit.config.ts` or the PocketBase schema, then rerun generation.
 - Treat PocketBase date values as strings unless the project explicitly sets `types.dateStrings: false`.
 - Expand types are string unions generated up to `types.expandDepth`; increase the depth only when deeper relation paths are needed.
 - Excluded collections produce no types, SDK functions, or plugin output.
 - Disabled operations remove the corresponding SDK functions and TanStack mutation/query helpers.
 - PocketBase filters are still PocketBase filter strings; pbkit types function parameters but does not validate filter syntax.
+- `input` is not always a URL — it can be a local JSON file. Do not infer baseUrl from `input`.
+- Leave `sdk.baseUrl` empty when the app uses multiple PB clients — rely on `{ client }` overrides per call.
 
 ## Agent Workflow
 
@@ -213,4 +246,5 @@ Prefer the generated query key helpers for precise cache invalidation when avail
 2. Install `@karnak19/pbkit` and `pocketbase` if the project does not already depend on them.
 3. Add `@karnak19/pbkit-tanstack` only when the project uses TanStack Query or explicitly asks for query helpers.
 4. Run `bunx pbkit generate` or `npx pbkit generate` after changing config or schema inputs.
-5. Import from generated files instead of recreating PocketBase access wrappers by hand.
+5. Import from generated files (`.gen.ts` suffix) instead of recreating PocketBase access wrappers by hand.
+6. For multi-client setups, leave `sdk.baseUrl` empty and pass `{ client }` override to SDK functions as needed.

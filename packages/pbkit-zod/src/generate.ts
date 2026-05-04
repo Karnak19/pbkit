@@ -93,9 +93,6 @@ function fieldToZod(field: CollectionField): string {
       schema = "z.string()";
       if (field.options.min != null) schema += `.min(${field.options.min})`;
       break;
-    case "autodate":
-      schema = "z.string()";
-      break;
     default:
       schema = "z.unknown()";
   }

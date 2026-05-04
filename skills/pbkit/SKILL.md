@@ -1,13 +1,13 @@
 ---
 name: pbkit
-description: Typed PocketBase SDK generator. Generates TypeScript types, SDK functions, and TanStack Query options from a PocketBase schema.
+description: Typed PocketBase SDK generator. Generates TypeScript types, SDK functions, TanStack Query options, and Zod schemas from a PocketBase schema.
 metadata:
-  tags: pocketbase, typescript, sdk, codegen, tanstack-query, database
+  tags: pocketbase, typescript, sdk, codegen, tanstack-query, zod, database
 ---
 
 # pbkit
 
-Use pbkit when a project needs type-safe TypeScript access to a PocketBase backend. pbkit reads a PocketBase schema from a live API or exported JSON file and generates typed records, create/update payloads, SDK functions, a client singleton, and optional plugin output.
+Use pbkit when a project needs type-safe TypeScript access to a PocketBase backend. pbkit reads a PocketBase schema from a live API or exported JSON file and generates typed records, create/update payloads, SDK functions, a client singleton, and optional plugin output (TanStack Query options, Zod schemas).
 
 ## What pbkit Generates
 
@@ -15,6 +15,7 @@ Use pbkit when a project needs type-safe TypeScript access to a PocketBase backe
 - `client.gen.ts`: Default PocketBase client singleton and `PbClient` type export.
 - `sdk.gen.ts`: Typed CRUD functions using the singleton client (with optional per-call override).
 - `tanstack.gen.ts`: TanStack Query options when using `@karnak19/pbkit-tanstack`.
+- `zod.gen.ts`: Zod schemas when using `@karnak19/pbkit-zod`.
 
 ## Install
 
@@ -31,6 +32,12 @@ bun add @karnak19/pbkit-tanstack @tanstack/query-core
 ```
 
 Install the framework adapter used by the app as well, such as `@tanstack/react-query`, `@tanstack/solid-query`, `@tanstack/svelte-query`, or `@tanstack/vue-query`.
+
+For Zod schema generation:
+
+```bash
+bun add @karnak19/pbkit-zod zod
+```
 
 ## Configuration
 
@@ -214,6 +221,46 @@ const createArticleMutation = useMutation({
 
 Prefer the generated query key helpers for precise cache invalidation when available. Use collection-level keys such as `["articles"]` when invalidating broad list state.
 
+## Zod Schema Integration
+
+Add the plugin to `pbkit.config.ts`:
+
+```ts
+import { zodPlugin } from "@karnak19/pbkit-zod"
+
+export default {
+  input: "https://my-pb.example.com",
+  output: "./src/generated",
+  plugins: [zodPlugin],
+}
+```
+
+The plugin generates `zod.gen.ts` with record, create, and update schemas per collection. PocketBase field constraints are preserved as Zod validations (min/max/pattern/email/url/enum/int):
+
+```ts
+import { ArticlesCreateSchema, ArticlesUpdateSchema } from "./generated/zod.gen"
+
+// Validate form input
+const result = ArticlesCreateSchema.safeParse(formData)
+
+// Use with react-hook-form
+import { zodResolver } from "@hookform/resolvers/zod"
+const { register } = useForm({ resolver: zodResolver(ArticlesCreateSchema) })
+```
+
+Both plugins can be used together:
+
+```ts
+import { zodPlugin } from "@karnak19/pbkit-zod"
+import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
+
+export default {
+  input: "https://my-pb.example.com",
+  output: "./src/generated",
+  plugins: [zodPlugin, tanstackPlugin],
+}
+```
+
 ## Field Type Mapping
 
 - `text`, `email`, `url`, and `editor` fields become `string`.
@@ -245,6 +292,7 @@ Prefer the generated query key helpers for precise cache invalidation when avail
 1. Check for an existing `pbkit.config.ts` before adding a new one.
 2. Install `@karnak19/pbkit` and `pocketbase` if the project does not already depend on them.
 3. Add `@karnak19/pbkit-tanstack` only when the project uses TanStack Query or explicitly asks for query helpers.
-4. Run `bunx pbkit generate` or `npx pbkit generate` after changing config or schema inputs.
-5. Import from generated files (`.gen.ts` suffix) instead of recreating PocketBase access wrappers by hand.
-6. For multi-client setups, leave `sdk.baseUrl` empty and pass `{ client }` override to SDK functions as needed.
+4. Add `@karnak19/pbkit-zod` when the project needs runtime validation (forms, API responses).
+5. Run `bunx pbkit generate` or `npx pbkit generate` after changing config or schema inputs.
+6. Import from generated files (`.gen.ts` suffix) instead of recreating PocketBase access wrappers by hand.
+7. For multi-client setups, leave `sdk.baseUrl` empty and pass `{ client }` override to SDK functions as needed.

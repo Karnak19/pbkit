@@ -18,7 +18,7 @@ hero:
 
 - **TypeScript types** — Auto-generated `XxxRecord`, `XxxCreate`, `XxxUpdate`, and `XxxExpand` types for every collection.
 - **Typed SDK** — CRUD functions wrapping the PocketBase JS SDK with full type safety and autocomplete.
-- **Plugin system** — Extend output with plugins — TanStack Query options with query key helpers included out of the box.
+- **Plugin system** — Extend output with plugins — TanStack Query options, Zod schemas, or write your own.
 
 ## Quick example
 

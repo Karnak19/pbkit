@@ -308,6 +308,7 @@ await generateProject({
 |---|---|
 | `@karnak19/pbkit` | Core: schema parser, type generator, SDK generator, CLI |
 | `@karnak19/pbkit-tanstack` | Plugin: TanStack Query options (queryOptions/mutationOptions) |
+| `@karnak19/pbkit-zod` | Plugin: Zod schemas from PocketBase field constraints |
 
 ## License
 

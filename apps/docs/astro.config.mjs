@@ -20,8 +20,8 @@ export default defineConfig({
       plugins: [
         lucode({
           navLinks: [
-            { label: "Docs", link: "/getting-started/introduction/" },
-            { label: "API", link: "/api/overview/" },
+            { label: "Docs", link: "/pbkit/getting-started/installation/" },
+            { label: "API", link: "/pbkit/api/programmatic/" },
           ],
         }),
       ],

@@ -1,5 +1,6 @@
 import { defineConfig } from "astro/config"
 import starlight from "@astrojs/starlight"
+import lucode from "lucode-starlight"
 
 export default defineConfig({
   outDir: "dist",
@@ -15,6 +16,14 @@ export default defineConfig({
           label: "GitHub",
           href: "https://github.com/Karnak19/pbkit",
         },
+      ],
+      plugins: [
+        lucode({
+          navLinks: [
+            { label: "Docs", link: "/getting-started/introduction/" },
+            { label: "API", link: "/api/overview/" },
+          ],
+        }),
       ],
       sidebar: [
         { label: "Home", link: "/" },

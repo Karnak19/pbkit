@@ -6,7 +6,7 @@ hero:
   tagline: Generate fully typed TypeScript SDKs from your PocketBase schema.
   actions:
     - text: Get Started
-      link: /getting-started/installation
+      link: /pbkit/getting-started/installation
       icon: right-arrow
       variant: primary
     - text: View on GitHub

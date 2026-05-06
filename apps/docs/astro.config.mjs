@@ -17,6 +17,7 @@ export default defineConfig({
           href: "https://github.com/Karnak19/pbkit",
         },
       ],
+      customCss: ["./src/styles/custom.css"],
       plugins: [
         lucode({
           navLinks: [

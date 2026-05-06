@@ -1,0 +1,11 @@
+[data-slot="layout"] > main > .markdown-wrapper {
+    max-width: 48rem;
+    margin-inline: auto;
+    padding-inline: calc(var(--spacing) * 4);
+}
+
+@media (min-width: 768px) {
+    [data-slot="layout"] > main > .markdown-wrapper {
+        padding-inline: 0;
+    }
+}

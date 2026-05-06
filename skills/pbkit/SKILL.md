@@ -1,19 +1,20 @@
 ---
 name: pbkit
-description: Typed PocketBase SDK generator. Generates TypeScript types, SDK functions, TanStack Query options, and Zod schemas from a PocketBase schema.
+description: Typed PocketBase SDK generator. Generates TypeScript types, SDK functions, realtime subscriptions, TanStack Query options, and Zod schemas from a PocketBase schema.
 metadata:
-  tags: pocketbase, typescript, sdk, codegen, tanstack-query, zod, database
+  tags: pocketbase, typescript, sdk, codegen, tanstack-query, zod, realtime, database
 ---
 
 # pbkit
 
-Use pbkit when a project needs type-safe TypeScript access to a PocketBase backend. pbkit reads a PocketBase schema from a live API or exported JSON file and generates typed records, create/update payloads, SDK functions, a client singleton, and optional plugin output (TanStack Query options, Zod schemas).
+Use pbkit when a project needs type-safe TypeScript access to a PocketBase backend. pbkit reads a PocketBase schema from a live API or exported JSON file and generates typed records, create/update payloads, SDK functions, a client singleton, and optional plugin output (realtime subscriptions, TanStack Query options, Zod schemas).
 
 ## What pbkit Generates
 
 - `types.gen.ts`: TypeScript types for each non-excluded collection, including `XxxRecord`, `XxxCreate`, `XxxUpdate`, `XxxExpand`, and `CollectionName`.
 - `client.gen.ts`: Default PocketBase client singleton and `PbClient` type export.
 - `sdk.gen.ts`: Typed CRUD functions using the singleton client (with optional per-call override).
+- `realtime.gen.ts`: Typed realtime subscription helpers when using `@karnak19/pbkit-realtime`.
 - `tanstack.gen.ts`: TanStack Query options when using `@karnak19/pbkit-tanstack`.
 - `zod.gen.ts`: Zod schemas when using `@karnak19/pbkit-zod`.
 
@@ -25,6 +26,12 @@ bun add pocketbase
 ```
 
 pbkit is a build-time code generator, so install it as a devDependency. `pocketbase` is a peer/runtime dependency for projects that use generated SDK functions, so it stays a regular dependency.
+
+For Realtime subscription generation:
+
+```bash
+bun add @karnak19/pbkit-realtime
+```
 
 For TanStack Query generation:
 
@@ -190,6 +197,38 @@ await listArticles({ page: 1, fetch })
 
 Generated auth collections include helpers named from the singular collection name. For a `users` collection, pbkit generates helpers such as `authUserWithPassword`, `authUserWithOAuth2`, `authUserWithOTP`, `requestUserPasswordReset`, `confirmUserPasswordReset`, `requestUserVerification`, `confirmUserVerification`, `requestUserEmailChange`, `confirmUserEmailChange`, and `refreshUser`. For an `admins` collection, those names use `Admin` instead of `User`.
 
+## Realtime Subscriptions
+
+Add the plugin to `pbkit.config.ts`:
+
+```ts
+import { realtimePlugin } from "@karnak19/pbkit-realtime"
+
+export default {
+  input: "https://my-pb.example.com",
+  output: "./src/generated",
+  plugins: [realtimePlugin],
+}
+```
+
+The plugin generates `realtime.gen.ts` with typed subscription helpers using PocketBase's built-in SSE system:
+
+```ts
+import { subscribeToArticles } from "./generated/realtime.gen"
+import type { RealtimeEvent } from "./generated/realtime.gen"
+
+const unsub = subscribeToArticles((event: RealtimeEvent<ArticlesRecord>) => {
+  if (event.action === "create") {
+    console.log("New article:", event.record.title)
+  }
+}, { filter: 'status = "published"' })
+
+// Later
+await unsub()
+```
+
+Each `subscribeTo{Collection}()` function accepts a typed callback, optional `filter` (PocketBase filter string), optional `id` (subscribe to a specific record), and returns an unsubscribe function. The plugin respects `collections` config — excluded collections are skipped.
+
 ## TanStack Query Integration
 
 Add the plugin to `pbkit.config.ts`:
@@ -267,16 +306,17 @@ import { zodResolver } from "@hookform/resolvers/zod"
 const { register } = useForm({ resolver: zodResolver(ArticlesCreateSchema) })
 ```
 
-Both plugins can be used together:
+All plugins can be used together:
 
 ```ts
 import { zodPlugin } from "@karnak19/pbkit-zod"
 import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
+import { realtimePlugin } from "@karnak19/pbkit-realtime"
 
 export default {
   input: "https://my-pb.example.com",
   output: "./src/generated",
-  plugins: [zodPlugin, tanstackPlugin],
+  plugins: [zodPlugin, tanstackPlugin, realtimePlugin],
 }
 ```
 
@@ -320,9 +360,10 @@ When a project already uses [pocketbase-typegen](https://github.com/patmood/pock
 
 1. Check for an existing `pbkit.config.ts` before adding a new one.
 2. Install `@karnak19/pbkit` and `pocketbase` if the project does not already depend on them.
-3. Add `@karnak19/pbkit-tanstack` only when the project uses TanStack Query or explicitly asks for query helpers.
-4. Add `@karnak19/pbkit-zod` when the project needs runtime validation (forms, API responses).
-5. Run `bunx pbkit generate` or `npx pbkit generate` after changing config or schema inputs.
-6. Import from generated files (`.gen.ts` suffix) instead of recreating PocketBase access wrappers by hand.
-7. For multi-client setups, leave `sdk.baseUrl` empty and pass `{ client }` override to SDK functions as needed.
-8. If the project uses `pocketbase-typegen`, follow the migration mapping above rather than adding pbkit alongside it.
+3. Add `@karnak19/pbkit-realtime` when the project needs realtime SSE subscriptions.
+4. Add `@karnak19/pbkit-tanstack` only when the project uses TanStack Query or explicitly asks for query helpers.
+5. Add `@karnak19/pbkit-zod` when the project needs runtime validation (forms, API responses).
+6. Run `bunx pbkit generate` or `npx pbkit generate` after changing config or schema inputs.
+7. Import from generated files (`.gen.ts` suffix) instead of recreating PocketBase access wrappers by hand.
+8. For multi-client setups, leave `sdk.baseUrl` empty and pass `{ client }` override to SDK functions as needed.
+9. If the project uses `pocketbase-typegen`, follow the migration mapping above rather than adding pbkit alongside it.

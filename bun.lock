@@ -42,6 +42,17 @@
         "typescript": "^6.0.0",
       },
     },
+    "packages/pbkit-realtime": {
+      "name": "@karnak19/pbkit-realtime",
+      "version": "0.1.0",
+      "dependencies": {
+        "@karnak19/pbkit": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "^1.3.13",
+        "typescript": "^6.0.0",
+      },
+    },
     "packages/pbkit-tanstack": {
       "name": "@karnak19/pbkit-tanstack",
       "version": "0.1.3",
@@ -260,6 +271,8 @@
     "@karnak19/docs": ["@karnak19/docs@workspace:apps/docs"],
 
     "@karnak19/pbkit": ["@karnak19/pbkit@workspace:packages/pbkit"],
+
+    "@karnak19/pbkit-realtime": ["@karnak19/pbkit-realtime@workspace:packages/pbkit-realtime"],
 
     "@karnak19/pbkit-tanstack": ["@karnak19/pbkit-tanstack@workspace:packages/pbkit-tanstack"],
 

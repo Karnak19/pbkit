@@ -138,6 +138,8 @@ function LiveComments({ articleId }: { articleId: string }) {
 }
 ```
 
+Note: PocketBase filter strings are passed directly to the server. Avoid interpolating untrusted user input into filter strings. Use PocketBase's parameterized filter syntax where needed.
+
 ## Collection filtering
 
 The plugin respects the `collections` config — excluded collections won't generate subscription functions:

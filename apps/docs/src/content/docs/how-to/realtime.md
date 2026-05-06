@@ -138,7 +138,7 @@ function LiveComments({ articleId }: { articleId: string }) {
 }
 ```
 
-Note: PocketBase filter strings are passed directly to the server. Avoid interpolating untrusted user input into filter strings. Use PocketBase's parameterized filter syntax where needed.
+Avoid interpolating untrusted input directly into filter strings. Prefer constructing filters server-side or validating IDs before inserting them.
 
 ## Collection filtering
 

@@ -1,5 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { parseJson } from "@karnak19/pbkit";
+import type { PluginContext } from "@karnak19/pbkit";
 import { generateRealtime, realtimePlugin } from "../generate";
 import fullSchema from "./fixtures/full-schema.json";
 
@@ -8,7 +9,7 @@ const ctx = {
   ir,
   typesImport: "./types.gen",
   sdkImport: "./sdk.gen",
-};
+} satisfies PluginContext;
 
 describe("generateRealtime", () => {
   const output = generateRealtime(ir, ctx);

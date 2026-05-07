@@ -217,14 +217,14 @@ The plugin generates `realtime.gen.ts` with typed subscription helpers using Poc
 import { subscribeToArticles } from "./generated/realtime.gen"
 import type { RealtimeEvent } from "./generated/realtime.gen"
 
-const unsub = subscribeToArticles((event: RealtimeEvent<ArticlesRecord>) => {
+const unsub = await subscribeToArticles((event: RealtimeEvent<ArticlesRecord>) => {
   if (event.action === "create") {
     console.log("New article:", event.record.title)
   }
 }, { filter: 'status = "published"' })
 
 // Later
-await unsub()
+unsub()
 ```
 
 Each `subscribeTo{Collection}()` function accepts a typed callback, optional `filter` (PocketBase filter string), optional `id` (subscribe to a specific record), and returns an unsubscribe function. The plugin respects `collections` config — excluded collections are skipped.

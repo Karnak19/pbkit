@@ -15,54 +15,50 @@ export interface RealtimeEvent<T> {
 
 // --- Users ---
 
-export function subscribeToUsers(
+export async function subscribeToUsers(
   callback: (event: RealtimeEvent<UsersRecord>) => void,
   options?: { filter?: string; id?: string },
-): () => Promise<void> {
+): Promise<() => void> {
   const target = options?.id ?? "*"
-  client.collection("users").subscribe(target, (e) => {
+  return client.collection("users").subscribe(target, (e) => {
     callback({ action: e.action as RealtimeAction, record: e.record as UsersRecord })
   }, { filter: options?.filter })
-  return () => client.collection("users").unsubscribe(target)
 }
 
 // --- Categories ---
 
-export function subscribeToCategories(
+export async function subscribeToCategories(
   callback: (event: RealtimeEvent<CategoriesRecord>) => void,
   options?: { filter?: string; id?: string },
-): () => Promise<void> {
+): Promise<() => void> {
   const target = options?.id ?? "*"
-  client.collection("categories").subscribe(target, (e) => {
+  return client.collection("categories").subscribe(target, (e) => {
     callback({ action: e.action as RealtimeAction, record: e.record as CategoriesRecord })
   }, { filter: options?.filter })
-  return () => client.collection("categories").unsubscribe(target)
 }
 
 // --- Articles ---
 
-export function subscribeToArticles(
+export async function subscribeToArticles(
   callback: (event: RealtimeEvent<ArticlesRecord>) => void,
   options?: { filter?: string; id?: string },
-): () => Promise<void> {
+): Promise<() => void> {
   const target = options?.id ?? "*"
-  client.collection("articles").subscribe(target, (e) => {
+  return client.collection("articles").subscribe(target, (e) => {
     callback({ action: e.action as RealtimeAction, record: e.record as ArticlesRecord })
   }, { filter: options?.filter })
-  return () => client.collection("articles").unsubscribe(target)
 }
 
 // --- Comments ---
 
-export function subscribeToComments(
+export async function subscribeToComments(
   callback: (event: RealtimeEvent<CommentsRecord>) => void,
   options?: { filter?: string; id?: string },
-): () => Promise<void> {
+): Promise<() => void> {
   const target = options?.id ?? "*"
-  client.collection("comments").subscribe(target, (e) => {
+  return client.collection("comments").subscribe(target, (e) => {
     callback({ action: e.action as RealtimeAction, record: e.record as CommentsRecord })
   }, { filter: options?.filter })
-  return () => client.collection("comments").unsubscribe(target)
 }
 "
 `;

@@ -53,13 +53,13 @@ export interface RealtimeEvent<T> {
 export function subscribeToArticles(
   callback: (event: RealtimeEvent<ArticlesRecord>) => void,
   options?: { filter?: string; id?: string },
-): () => Promise<void>
+): Promise<() => void>
 ```
 
 Each function:
 - Accepts a typed callback receiving `RealtimeEvent<{Collection}Record>`
 - Accepts optional `filter` (PocketBase filter string) and `id` (subscribe to a specific record)
-- Returns an unsubscribe function `() => Promise<void>`
+- Returns `Promise<() => void>` — an async function that resolves with an unsubscribe callback
 
 ## Usage example
 
@@ -68,7 +68,7 @@ Each function:
 ```ts
 import { subscribeToArticles } from "./generated/realtime.gen"
 
-const unsub = subscribeToArticles((event) => {
+const unsub = await subscribeToArticles((event) => {
   if (event.action === "create") {
     console.log("New article:", event.record.title)
   }
@@ -81,13 +81,13 @@ const unsub = subscribeToArticles((event) => {
 })
 
 // Later, when you no longer need the subscription
-await unsub()
+unsub()
 ```
 
 ### Subscribe with a filter
 
 ```ts
-const unsub = subscribeToArticles(
+const unsub = await subscribeToArticles(
   (event) => {
     console.log("Published article changed:", event.record.title)
   },
@@ -98,7 +98,7 @@ const unsub = subscribeToArticles(
 ### Subscribe to a specific record
 
 ```ts
-const unsub = subscribeToArticles(
+const unsub = await subscribeToArticles(
   (event) => {
     console.log("Article updated:", event.record.title)
   },
@@ -116,16 +116,18 @@ function LiveComments({ articleId }: { articleId: string }) {
   const [comments, setComments] = useState([])
 
   useEffect(() => {
-    const unsub = subscribeToComments(
+    let unsub: (() => void) | undefined
+
+    subscribeToComments(
       (event) => {
         if (event.action === "create") {
           setComments((prev) => [...prev, event.record])
         }
       },
       { filter: `article = "${articleId}"` },
-    )
+    ).then((fn) => { unsub = fn })
 
-    return () => { unsub() }
+    return () => { unsub?.() }
   }, [articleId])
 
   return (

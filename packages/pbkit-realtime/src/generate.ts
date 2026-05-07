@@ -10,15 +10,14 @@ function subscribeFunction(col: CollectionSchema): string[] {
 
   const lines: string[] = [];
 
-  lines.push(`export function ${fnName}(`);
+  lines.push(`export async function ${fnName}(`);
   lines.push(`  callback: (event: RealtimeEvent<${recordType}>) => void,`);
   lines.push(`  options?: { filter?: string; id?: string },`);
-  lines.push(`): () => Promise<void> {`);
+  lines.push(`): Promise<() => void> {`);
   lines.push(`  const target = options?.id ?? "*"`);
-  lines.push(`  client.collection(${c}).subscribe(target, (e) => {`);
+  lines.push(`  return client.collection(${c}).subscribe(target, (e) => {`);
   lines.push(`    callback({ action: e.action as RealtimeAction, record: e.record as ${recordType} })`);
   lines.push(`  }, { filter: options?.filter })`);
-  lines.push(`  return () => client.collection(${c}).unsubscribe(target)`);
   lines.push(`}`);
   lines.push("");
 

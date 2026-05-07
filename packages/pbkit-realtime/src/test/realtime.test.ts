@@ -44,11 +44,11 @@ describe("generateRealtime", () => {
     expect(output).toContain("record: T");
   });
 
-  test("generates subscribe function per collection", () => {
-    expect(output).toContain("export function subscribeToArticles(");
-    expect(output).toContain("export function subscribeToComments(");
-    expect(output).toContain("export function subscribeToCategories(");
-    expect(output).toContain("export function subscribeToUsers(");
+  test("generates async subscribe function per collection", () => {
+    expect(output).toContain("export async function subscribeToArticles(");
+    expect(output).toContain("export async function subscribeToComments(");
+    expect(output).toContain("export async function subscribeToCategories(");
+    expect(output).toContain("export async function subscribeToUsers(");
   });
 
   test("subscribe function accepts typed callback", () => {
@@ -60,8 +60,8 @@ describe("generateRealtime", () => {
     expect(output).toContain("options?: { filter?: string; id?: string }");
   });
 
-  test("subscribe function returns unsubscribe function", () => {
-    expect(output).toContain("): () => Promise<void>");
+  test("subscribe function returns Promise of unsubscribe function", () => {
+    expect(output).toContain("): Promise<() => void>");
   });
 
   test("uses client.collection with correct name", () => {

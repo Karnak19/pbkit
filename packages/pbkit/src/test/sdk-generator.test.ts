@@ -9,7 +9,8 @@ describe("generateSdk", () => {
   const output = generateSdk(ir);
 
   test("imports client and PbClient from client.gen", () => {
-    expect(output).toContain('import { client, type PbClient } from "./client.gen"');
+    expect(output).toContain('import { client } from "./client.gen"');
+    expect(output).toContain('import type { PbClient } from "./client.gen"');
   });
 
   test("does not import PocketBase directly", () => {

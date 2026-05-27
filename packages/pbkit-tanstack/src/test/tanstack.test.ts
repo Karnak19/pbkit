@@ -25,8 +25,8 @@ describe("generateTanstack", () => {
     expect(output).not.toContain("useQueryClient");
   });
 
-  test("does not import PbClient", () => {
-    expect(output).not.toContain("PbClient");
+  test("imports PbClient type", () => {
+    expect(output).toContain("type PbClient");
   });
 
   test("imports SDK functions", () => {
@@ -144,14 +144,14 @@ describe("generateTanstack", () => {
     expect(output).toContain("queryFn: () => listArticles(params)");
   });
 
-  test("mutation options call SDK functions without pb", () => {
-    expect(output).toContain("mutationFn: (data: ArticlesCreate) => createArticle(data)");
-    expect(output).toContain("mutationFn: (id: string) => deleteArticle(id)");
+  test("mutation options call SDK functions with opts", () => {
+    expect(output).toContain("mutationFn: (data: ArticlesCreate) => createArticle(data, opts)");
+    expect(output).toContain("mutationFn: (id: string) => deleteArticle(id, opts)");
   });
 
-  test("mutation options have no parameters", () => {
-    expect(output).toContain("createArticleMutationOptions()");
-    expect(output).toContain("deleteArticleMutationOptions()");
+  test("mutation options accept optional opts parameter", () => {
+    expect(output).toContain("createArticleMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch })");
+    expect(output).toContain("deleteArticleMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch })");
   });
 
   test("query options do not take pb as param", () => {

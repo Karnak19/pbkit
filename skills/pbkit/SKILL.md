@@ -177,6 +177,10 @@ const updated = await updateArticle(created.id, { status: "published" })
 
 // Override with a specific client
 const article = await getArticle("RECORD_ID", undefined, { client: pbServer })
+
+// Pass custom fetch (useful for SvelteKit, Next.js, etc.)
+await createArticle(data, { fetch })
+await listArticles({ page: 1, fetch })
 ```
 
 Generated auth collections include helpers named from the singular collection name. For a `users` collection, pbkit generates helpers such as `authUserWithPassword`, `authUserWithOAuth2`, `authUserWithOTP`, `requestUserPasswordReset`, `confirmUserPasswordReset`, `requestUserVerification`, `confirmUserVerification`, `requestUserEmailChange`, `confirmUserEmailChange`, and `refreshUser`. For an `admins` collection, those names use `Admin` instead of `User`.
@@ -217,6 +221,16 @@ const createArticleMutation = useMutation({
     queryClient.invalidateQueries({ queryKey: ["articles"] })
   },
 })
+```
+
+Mutation options accept an optional `opts` parameter to pass a custom `fetch` function or `client` override:
+
+```tsx
+// Pass custom fetch (useful for SvelteKit, Next.js, etc.)
+const createArticleMutation = useMutation(createArticleMutationOptions({ fetch }))
+
+// Pass custom client
+const createArticleMutation = useMutation(createArticleMutationOptions({ client: pbServer }))
 ```
 
 Prefer the generated query key helpers for precise cache invalidation when available. Use collection-level keys such as `["articles"]` when invalidating broad list state.

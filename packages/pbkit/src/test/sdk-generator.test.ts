@@ -35,6 +35,16 @@ describe("generateSdk", () => {
     expect(output).toContain("export interface RequestOptions");
   });
 
+  test("RequestOptions includes fetch property", () => {
+    expect(output).toContain("fetch?: typeof fetch");
+  });
+
+  test("ListParams includes fetch property", () => {
+    const listParamsMatch = output.match(/export interface ListParams \{[^}]+\}/);
+    expect(listParamsMatch).toBeTruthy();
+    expect(listParamsMatch![0]).toContain("fetch?: typeof fetch");
+  });
+
   test("imports all Record/Create/Update types", () => {
     expect(output).toContain("UsersRecord");
     expect(output).toContain("UsersCreate");
@@ -110,13 +120,17 @@ describe("generateSdk", () => {
     expect(output).toContain("opts?: { client?: PbClient }");
   });
 
+  test("create/update/delete accept fetch in opts", () => {
+    expect(output).toContain("opts?: { client?: PbClient; fetch?: typeof fetch }");
+  });
+
   test("functions resolve pb from opts or singleton", () => {
     expect(output).toContain("const pb = opts?.client ?? client");
   });
 
   test("delete returns Promise<true>", () => {
     expect(output).toContain(
-      "deleteArticle(id: string, opts?: { client?: PbClient }): Promise<true>",
+      "deleteArticle(id: string, opts?: { client?: PbClient; fetch?: typeof fetch }): Promise<true>",
     );
   });
 

@@ -1,0 +1,82 @@
+Review pull request #$PR_NUMBER in $GITHUB_REPOSITORY.
+
+You are responsible for posting GitHub comments yourself with gh.
+
+Workflow:
+1. Inspect the current diff only. Prefer gh and git commands such as:
+   - gh pr diff $PR_NUMBER --patch
+   - gh api repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files --paginate
+   - git diff origin/$PR_BASE_REF...HEAD
+2. Inspect existing managed comments and their reply threads before posting anything:
+   - gh api repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/comments --paginate
+   - gh api repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments --paginate
+3. Clean up previous managed inline comments (body contains <!-- ai-pr-review:inline -->):
+   - Check each managed comment for replies (other comments with in_reply_to_id pointing to it).
+   - If a managed comment has replies (i.e. someone responded), DO NOT delete it. The thread has context worth preserving.
+   - Only delete managed comments that have zero replies.
+4. Resolve addressed threads:
+   - Fetch all review threads via GraphQL:
+     gh api graphql -f query='query { repository(owner: "OWNER", name: "REPO") { pullRequest(number: $PR_NUMBER) { reviewThreads(first: 100) { nodes { id isResolved comments(first: 10) { nodes { body author { login } } } } } } } }'
+     (Replace OWNER/REPO by splitting $GITHUB_REPOSITORY on "/")
+   - For each unresolved thread where the bot posted the first comment (contains <!-- ai-pr-review:inline -->) and a non-bot user replied:
+     - If the reply says "Skipping" with a reason: resolve the thread (the author intentionally declined the suggestion).
+     - If the reply says "Fixed" or indicates the issue was addressed: verify in the current diff that the fix is correct and actually resolves the reported problem. If the fix looks correct, resolve the thread. If the fix is incomplete or incorrect, reply to the thread explaining what's still wrong instead of resolving it.
+   - Resolve a thread with:
+     gh api graphql -f query='mutation { resolveReviewThread(input: { threadId: "THREAD_NODE_ID" }) { thread { isResolved } } }'
+5. Decide what to post. For each finding:
+   - If the same file+line already has a managed comment thread with replies, and the reply says "Fixed":
+     - Verify the fix is actually present in the current diff. If the fix was reverted, never committed, or is no longer relevant, the issue is still open — re-raise it by replying to the thread (in_reply_to) explaining the fix is no longer present.
+     - Only skip if the fix is confirmed present in the diff.
+   - If the same file+line has a thread where the reply says "Skipping" with a reason, do not re-raise the same issue.
+   - If the issue is genuinely new or unaddressed, post it.
+   - If posting on a file+line that already has an existing thread, reply to that thread (using in_reply_to) instead of creating a new top-level comment.
+6. Post at most 3 new inline PR comments inside a single PR review, not as separate standalone comments.
+7. If there are no new material issues, keep or create exactly one short PR comment:
+   No new major issues found. <!-- ai-pr-review:status -->
+   Update an existing managed status comment if present.
+8. If you post inline comments, delete any previous managed status comment.
+
+Inline comment rules:
+- Only comment on changed lines in the current diff.
+- Prioritize correctness, security, performance, and meaningful maintainability problems.
+- Ignore style nits, broad rewrite advice, praise, and speculative edge cases.
+- Each comment should be thorough: explain the problem clearly, why it matters, and suggest a concrete fix with a short code snippet when helpful. Aim for 3 to 8 sentences per comment.
+- Use problem -> impact -> fix wording, but expand on each section enough to be genuinely useful.
+- End every inline comment body with <!-- ai-pr-review:inline -->.
+- Batch all inline comments into one review submission whenever you have findings.
+- The single review body should contain a clear summary of findings: a short intro sentence followed by a bullet per finding explaining the issue and its severity. Aim for 50 to 150 words.
+
+GitHub API notes:
+- Preferred: create a single review with all inline comments using:
+  gh api repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/reviews \
+    -X POST \
+    --input - <<'JSON'
+  {
+    "commit_id": "$PR_HEAD_SHA",
+    "event": "COMMENT",
+    "body": "Quick recap:\n- issue 1\n- issue 2\n<!-- ai-pr-review:review -->",
+    "comments": [
+      {
+        "path": "path/to/file.ts",
+        "line": 123,
+        "side": "RIGHT",
+        "body": "Problem -> impact -> fix <!-- ai-pr-review:inline -->"
+      }
+    ]
+  }
+  JSON
+- Reply to an existing inline comment thread (preferred over new top-level comment when thread exists):
+  gh api repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/comments -f body='Follow-up comment <!-- ai-pr-review:inline -->' -F in_reply_to=COMMENT_ID
+- Delete inline comment with (only if it has no replies):
+  gh api repos/$GITHUB_REPOSITORY/pulls/comments/COMMENT_ID -X DELETE
+- Create status comment with:
+  gh api repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments -X POST -f body='No new major issues found. <!-- ai-pr-review:status -->'
+- Update status comment with:
+  gh api repos/$GITHUB_REPOSITORY/issues/comments/COMMENT_ID -X PATCH -f body='No new major issues found. <!-- ai-pr-review:status -->'
+- Delete status comment with:
+  gh api repos/$GITHUB_REPOSITORY/issues/comments/COMMENT_ID -X DELETE
+
+Do not modify repository files.
+Do not create multiple separate reviews for the same run.
+Do not create a top-level summary review outside the single batched review.
+Do not explain what you did unless necessary for an error.

@@ -86,6 +86,19 @@ const createMut = useMutation(createArticleMutationOptions())
 const updateMut = useMutation(updateArticleMutationOptions())
 ```
 
+Mutation options accept an optional `opts` parameter to pass a custom `fetch` function or `client` override:
+
+```ts
+// Pass custom fetch (useful for SvelteKit, Next.js, etc.)
+const createMut = useMutation(createArticleMutationOptions({ fetch }))
+
+// Pass custom client
+const createMut = useMutation(createArticleMutationOptions({ client: pbServer }))
+
+// Combine both
+const createMut = useMutation(createArticleMutationOptions({ client: pbServer, fetch }))
+```
+
 ## Usage example
 
 ```tsx

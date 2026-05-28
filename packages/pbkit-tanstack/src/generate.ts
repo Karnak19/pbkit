@@ -117,27 +117,27 @@ function mutationOptions_(col: CollectionSchema, collections?: CollectionsConfig
   const op = (name: OperationName) => isOperationEnabled(col.name, name, collections);
 
   if (op("create")) {
-    lines.push(`export function create${s}MutationOptions() {`);
+    lines.push(`export function create${s}MutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {`);
     lines.push("  return mutationOptions({");
-    lines.push(`    mutationFn: (data: ${p}Create) => create${s}(data),`);
+    lines.push(`    mutationFn: (data: ${p}Create) => create${s}(data, opts),`);
     lines.push("  })");
     lines.push("}");
   }
   if (op("update")) {
     lines.push("");
-    lines.push(`export function update${s}MutationOptions() {`);
+    lines.push(`export function update${s}MutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {`);
     lines.push("  return mutationOptions({");
     lines.push(
-      `    mutationFn: ({ id, data }: { id: string; data: ${p}Update }) => update${s}(id, data),`,
+      `    mutationFn: ({ id, data }: { id: string; data: ${p}Update }) => update${s}(id, data, opts),`,
     );
     lines.push("  })");
     lines.push("}");
   }
   if (op("delete")) {
     lines.push("");
-    lines.push(`export function delete${s}MutationOptions() {`);
+    lines.push(`export function delete${s}MutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {`);
     lines.push("  return mutationOptions({");
-    lines.push(`    mutationFn: (id: string) => delete${s}(id),`);
+    lines.push(`    mutationFn: (id: string) => delete${s}(id, opts),`);
     lines.push("  })");
     lines.push("}");
   }
@@ -167,7 +167,7 @@ export function generateTanstack(ir: SchemaIR, ctx: PluginContext): string {
   parts.push("");
   parts.push('import { queryOptions, mutationOptions } from "@tanstack/query-core"');
   parts.push(`import type { ListParams, RequestOptions } from "${ctx.typesImport}"`);
-  parts.push(`import { ${sdkImports.join(", ")} } from "${ctx.sdkImport}"`);
+  parts.push(`import { ${sdkImports.join(", ")}, type PbClient } from "${ctx.sdkImport}"`);
   parts.push("");
 
   for (const col of cols) {

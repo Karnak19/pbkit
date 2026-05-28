@@ -5,7 +5,7 @@ exports[`generateTanstack snapshot 1`] = `
 
 import { queryOptions, mutationOptions } from "@tanstack/query-core"
 import type { ListParams, RequestOptions } from "./types.gen"
-import { getUser, getFirstUser, listUsers, getFullListUsers, createUser, updateUser, deleteUser, getCategory, getFirstCategory, listCategories, getFullListCategories, createCategory, updateCategory, deleteCategory, getArticle, getFirstArticle, listArticles, getFullListArticles, createArticle, updateArticle, deleteArticle, getComment, getFirstComment, listComments, getFullListComments, createComment, updateComment, deleteComment } from "./sdk.gen"
+import { getUser, getFirstUser, listUsers, getFullListUsers, createUser, updateUser, deleteUser, getCategory, getFirstCategory, listCategories, getFullListCategories, createCategory, updateCategory, deleteCategory, getArticle, getFirstArticle, listArticles, getFullListArticles, createArticle, updateArticle, deleteArticle, getComment, getFirstComment, listComments, getFullListComments, createComment, updateComment, deleteComment, type PbClient } from "./sdk.gen"
 
 // --- Users ---
 
@@ -52,21 +52,21 @@ export function fullListUsersOptions(params?: ListParams) {
     queryFn: () => getFullListUsers(params),
   })
 }
-export function createUserMutationOptions() {
+export function createUserMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: (data: UsersCreate) => createUser(data),
+    mutationFn: (data: UsersCreate) => createUser(data, opts),
   })
 }
 
-export function updateUserMutationOptions() {
+export function updateUserMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: ({ id, data }: { id: string; data: UsersUpdate }) => updateUser(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UsersUpdate }) => updateUser(id, data, opts),
   })
 }
 
-export function deleteUserMutationOptions() {
+export function deleteUserMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: (id: string) => deleteUser(id),
+    mutationFn: (id: string) => deleteUser(id, opts),
   })
 }
 
@@ -115,21 +115,21 @@ export function fullListCategoriesOptions(params?: ListParams) {
     queryFn: () => getFullListCategories(params),
   })
 }
-export function createCategoryMutationOptions() {
+export function createCategoryMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: (data: CategoriesCreate) => createCategory(data),
+    mutationFn: (data: CategoriesCreate) => createCategory(data, opts),
   })
 }
 
-export function updateCategoryMutationOptions() {
+export function updateCategoryMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: ({ id, data }: { id: string; data: CategoriesUpdate }) => updateCategory(id, data),
+    mutationFn: ({ id, data }: { id: string; data: CategoriesUpdate }) => updateCategory(id, data, opts),
   })
 }
 
-export function deleteCategoryMutationOptions() {
+export function deleteCategoryMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: (id: string) => deleteCategory(id),
+    mutationFn: (id: string) => deleteCategory(id, opts),
   })
 }
 
@@ -178,21 +178,21 @@ export function fullListArticlesOptions(params?: ListParams) {
     queryFn: () => getFullListArticles(params),
   })
 }
-export function createArticleMutationOptions() {
+export function createArticleMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: (data: ArticlesCreate) => createArticle(data),
+    mutationFn: (data: ArticlesCreate) => createArticle(data, opts),
   })
 }
 
-export function updateArticleMutationOptions() {
+export function updateArticleMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: ({ id, data }: { id: string; data: ArticlesUpdate }) => updateArticle(id, data),
+    mutationFn: ({ id, data }: { id: string; data: ArticlesUpdate }) => updateArticle(id, data, opts),
   })
 }
 
-export function deleteArticleMutationOptions() {
+export function deleteArticleMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: (id: string) => deleteArticle(id),
+    mutationFn: (id: string) => deleteArticle(id, opts),
   })
 }
 
@@ -241,21 +241,21 @@ export function fullListCommentsOptions(params?: ListParams) {
     queryFn: () => getFullListComments(params),
   })
 }
-export function createCommentMutationOptions() {
+export function createCommentMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: (data: CommentsCreate) => createComment(data),
+    mutationFn: (data: CommentsCreate) => createComment(data, opts),
   })
 }
 
-export function updateCommentMutationOptions() {
+export function updateCommentMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: ({ id, data }: { id: string; data: CommentsUpdate }) => updateComment(id, data),
+    mutationFn: ({ id, data }: { id: string; data: CommentsUpdate }) => updateComment(id, data, opts),
   })
 }
 
-export function deleteCommentMutationOptions() {
+export function deleteCommentMutationOptions(opts?: { client?: PbClient; fetch?: typeof fetch }) {
   return mutationOptions({
-    mutationFn: (id: string) => deleteComment(id),
+    mutationFn: (id: string) => deleteComment(id, opts),
   })
 }
 "

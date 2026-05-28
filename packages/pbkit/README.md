@@ -86,6 +86,18 @@ const pb = new PocketBase("https://my-pocketbase.example.com")
 await getArticle("ARTICLE_ID", undefined, { client: pb })
 ```
 
+### Custom fetch
+
+You can pass a custom `fetch` function to any SDK method. This is useful in
+frameworks like SvelteKit or Next.js that provide their own fetch implementation:
+
+```ts
+import { createArticle, listArticles } from "./generated/sdk.gen"
+
+await createArticle(data, { fetch })
+await listArticles({ page: 1, fetch })
+```
+
 ## Configuration Options
 
 ```ts

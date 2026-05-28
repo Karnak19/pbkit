@@ -33,9 +33,9 @@ getFullListArticles(params?: ListParams, opts?: { client?: PbClient }): Promise<
 ### Write operations
 
 ```ts
-createArticle(data: ArticlesCreate, opts?: { client?: PbClient }): Promise<ArticlesRecord>
-updateArticle(id: string, data: ArticlesUpdate, opts?: { client?: PbClient }): Promise<ArticlesRecord>
-deleteArticle(id: string, opts?: { client?: PbClient }): Promise<true>
+createArticle(data: ArticlesCreate, opts?: { client?: PbClient; fetch?: typeof fetch }): Promise<ArticlesRecord>
+updateArticle(id: string, data: ArticlesUpdate, opts?: { client?: PbClient; fetch?: typeof fetch }): Promise<ArticlesRecord>
+deleteArticle(id: string, opts?: { client?: PbClient; fetch?: typeof fetch }): Promise<true>
 ```
 
 Pass `{ client }` as the final argument to use a different PocketBase instance
@@ -52,6 +52,28 @@ import { getArticle } from "./generated/sdk.gen"
 const article = await getArticle("RECORD_ID", {
   expand: "author",
 })
+```
+
+## Custom fetch
+
+You can pass a custom `fetch` function to any SDK method. This is useful in
+frameworks like SvelteKit or Next.js that provide their own fetch implementation
+to avoid hydration mismatches and enable proper request handling:
+
+```ts
+import { createArticle, listArticles, getArticle } from "./generated/sdk.gen"
+
+// Pass custom fetch to read operations
+const article = await getArticle("RECORD_ID", { fetch })
+const page = await listArticles({ page: 1, fetch })
+
+// Pass custom fetch to write operations
+await createArticle(data, { fetch })
+await updateArticle(id, data, { fetch })
+await deleteArticle(id, { fetch })
+
+// Combine with client override
+await createArticle(data, { client: pb, fetch })
 ```
 
 ## Auth functions
@@ -102,6 +124,7 @@ export interface ListParams {
   filter?: string
   expand?: string
   fields?: string
+  fetch?: typeof fetch
 }
 
 export interface RequestOptions {
@@ -109,6 +132,7 @@ export interface RequestOptions {
   filter?: string
   sort?: string
   fields?: string
+  fetch?: typeof fetch
 }
 ```
 

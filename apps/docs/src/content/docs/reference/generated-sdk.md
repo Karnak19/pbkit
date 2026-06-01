@@ -43,16 +43,39 @@ for a specific call.
 
 ## Typed expand
 
-When a collection has relations, the `expand` option is typed to the collection's `Expand` type:
+When a collection has relation fields, the read functions (`getX`, `getFirstX`,
+`listX`, `getFullListX`) are **generic over the requested expand string**, and the
+result carries a typed `.expand` matching exactly what you asked for:
 
 ```ts
 import { getArticle } from "./generated/sdk.gen"
 
-// expand is typed to ArticlesExpand — you get autocomplete
-const article = await getArticle("RECORD_ID", {
-  expand: "author",
-})
+const article = await getArticle("RECORD_ID", { expand: "author" })
+article.expand?.author // typed as UsersRecord
+
+const withCats = await getArticle("RECORD_ID", { expand: "author,categories" })
+withCats.expand?.author      // UsersRecord
+withCats.expand?.categories  // CategoriesRecord[]  (multi-relation → array)
+
+// Nested paths nest the expand object
+const nested = await getComment("RECORD_ID", { expand: "article.author" })
+nested.expand?.article.expand?.author // UsersRecord
+
+// No expand requested → no `.expand` on the result
+const plain = await getArticle("RECORD_ID")
 ```
+
+`expand` is the native PocketBase comma-separated string. `.expand` is optional
+on the result because PocketBase omits relations that are empty or unauthorized.
+
+:::note
+Because the result type is inferred from the literal you pass, the `expand`
+**input** is a plain `string` (no autocomplete). The valid paths are still
+generated as the [`XxxExpand`](/reference/expand-types) union if you want to
+reference or validate them yourself. Typing the result this way is what lets you
+read `record.expand.x` safely — see
+[issue #37](https://github.com/Karnak19/pbkit/issues/37).
+:::
 
 ## Custom fetch
 

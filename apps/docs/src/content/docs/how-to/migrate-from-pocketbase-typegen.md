@@ -22,7 +22,7 @@ sites.
 | Output | one `pocketbase-types.ts` | `types.gen.ts`, `client.gen.ts`, `sdk.gen.ts` |
 | Configuration | CLI flags | a `pbkit.config.ts` file |
 | Data access | cast `pb` to `TypedPocketBase`, call `pb.collection(...)` | import generated functions |
-| Expanding relations | manual generic parameters | typed `expand` option |
+| Expanding relations | manual generic parameters | inferred from the `expand` string — typed `record.expand.x` |
 
 ## Step 1: Swap the dependencies
 
@@ -209,15 +209,19 @@ const article = await pb
 article.expand?.author.email
 ```
 
-pbkit types the `expand` option directly from the schema, so you get
-autocomplete and no manual generics:
+pbkit infers the expanded shape from the `expand` string you pass — no manual
+generics. `record.expand.x` is fully typed, just like pocketbase-typegen, while
+the expand paths are computed from the schema:
 
 ```ts
 // after
 const article = await getArticle("RECORD_ID", { expand: "author" })
+
+article.expand?.author // typed as UsersRecord — read it directly
 ```
 
-See [Expand types](/reference/expand-types) for how expand paths are typed.
+Multi-relations come back as arrays and nested paths nest the `expand` object.
+See [Expand types](/reference/expand-types) for the full details.
 
 ## Authentication
 

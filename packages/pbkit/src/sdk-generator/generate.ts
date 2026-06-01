@@ -16,14 +16,26 @@ function singularize(name: string): string {
   return name;
 }
 
-function hasExpandType(col: CollectionSchema, ir: SchemaIR): boolean {
-  return ir.relations.some((r) => r.collectionName === col.name);
+// A collection has a typed relations map (and thus a typed `.expand` result)
+// when it has at least one forward relation whose target is generated. The
+// exclusion filter must match the type generator's `relationsMapType`, or the
+// SDK would reference an `XxxRelations`/`BuildExpand`/`Split` that types.gen.ts
+// never emitted.
+function hasRelationsMap(
+  col: CollectionSchema,
+  ir: SchemaIR,
+  collections?: CollectionsConfig,
+): boolean {
+  return ir.relations.some(
+    (r) => r.collectionName === col.name && !isCollectionExcluded(r.targetCollectionName, collections),
+  );
 }
 
-function expandParam(col: CollectionSchema, ir: SchemaIR): string {
-  if (!hasExpandType(col, ir)) return "RequestOptions";
+// The `.expand` shape contributed to a read result, given the captured
+// expand-string generic `S`. Resolves to `{}` when no expand was requested.
+function expandResult(col: CollectionSchema): string {
   const p = pascalCase(col.name);
-  return `Omit<RequestOptions, "expand"> & { expand?: ${p}Expand }`;
+  return `(S extends string ? { expand?: BuildExpand<${p}Relations, Split<S>> } : {})`;
 }
 
 export function generateClientFile(options: SdkGenerateOptions = {}): string {
@@ -48,47 +60,57 @@ function crudFunctions(
   const p = pascalCase(col.name);
   const s = pascalCase(singularize(col.name));
   const c = JSON.stringify(col.name);
-  const ep = expandParam(col, ir);
   const lines: string[] = [];
   const op = (name: string) => isOperationEnabled(col.name, name as any, collections);
 
+  // Collections with forward relations get read functions generic over the
+  // requested expand string, so the result carries a typed `.expand`.
+  const rel = hasRelationsMap(col, ir, collections);
+  const gen = rel ? "<const S extends string | undefined = undefined>" : "";
+  const reqOpt = rel ? `Omit<RequestOptions, "expand"> & { expand?: S }` : "RequestOptions";
+  const listOpt = rel ? `Omit<ListParams, "expand"> & { expand?: S }` : "ListParams";
+  const rec = rel ? `${p}Record & ${expandResult(col)}` : `${p}Record`;
+  // Parenthesize so the array applies to the whole intersection, not just the
+  // trailing conditional (`A & B[]` would parse as `A & (B[])`).
+  const recArr = rel ? `(${rec})[]` : `${rec}[]`;
+
   if (op("get")) {
     lines.push(
-      `export async function get${s}(id: string, options?: ${ep}, opts?: { client?: PbClient }): Promise<${p}Record> {`,
+      `export async function get${s}${gen}(id: string, options?: ${reqOpt}, opts?: { client?: PbClient }): Promise<${rec}> {`,
     );
     lines.push("  const pb = opts?.client ?? client");
-    lines.push(`  return pb.collection(${c}).getOne(id, options) as Promise<${p}Record>`);
+    lines.push(`  return pb.collection(${c}).getOne(id, options) as Promise<${rec}>`);
     lines.push("}");
     lines.push("");
   }
   if (op("getFirst")) {
     lines.push(
-      `export async function getFirst${s}(filter: string, options?: ${ep}, opts?: { client?: PbClient }): Promise<${p}Record> {`,
+      `export async function getFirst${s}${gen}(filter: string, options?: ${reqOpt}, opts?: { client?: PbClient }): Promise<${rec}> {`,
     );
     lines.push("  const pb = opts?.client ?? client");
     lines.push(
-      `  return pb.collection(${c}).getFirstListItem(filter, options) as Promise<${p}Record>`,
+      `  return pb.collection(${c}).getFirstListItem(filter, options) as Promise<${rec}>`,
     );
     lines.push("}");
     lines.push("");
   }
   if (op("list")) {
     lines.push(
-      `export async function list${p}(params?: ListParams, opts?: { client?: PbClient }): Promise<ListResult<${p}Record>> {`,
+      `export async function list${p}${gen}(params?: ${listOpt}, opts?: { client?: PbClient }): Promise<ListResult<${rec}>> {`,
     );
     lines.push("  const pb = opts?.client ?? client");
     lines.push(
-      `  return pb.collection(${c}).getList(params?.page, params?.perPage, params) as Promise<ListResult<${p}Record>>`,
+      `  return pb.collection(${c}).getList(params?.page, params?.perPage, params) as Promise<ListResult<${rec}>>`,
     );
     lines.push("}");
     lines.push("");
   }
   if (op("getFullList")) {
     lines.push(
-      `export async function getFullList${p}(params?: ListParams, opts?: { client?: PbClient }): Promise<${p}Record[]> {`,
+      `export async function getFullList${p}${gen}(params?: ${listOpt}, opts?: { client?: PbClient }): Promise<${recArr}> {`,
     );
     lines.push("  const pb = opts?.client ?? client");
-    lines.push(`  return pb.collection(${c}).getFullList(params) as Promise<${p}Record[]>`);
+    lines.push(`  return pb.collection(${c}).getFullList(params) as Promise<${recArr}>`);
     lines.push("}");
     lines.push("");
   }
@@ -229,9 +251,12 @@ export function generateSdk(
   const typeImports = cols.flatMap((c) => {
     const p = pascalCase(c.name);
     const imports = [`${p}Record`, `${p}Create`, `${p}Update`];
-    if (hasExpandType(c, ir)) imports.push(`${p}Expand`);
+    if (hasRelationsMap(c, ir, options.collections)) imports.push(`${p}Relations`);
     return imports;
   });
+  if (cols.some((c) => hasRelationsMap(c, ir, options.collections))) {
+    typeImports.push("BuildExpand", "Split");
+  }
 
   const parts: string[] = [];
 

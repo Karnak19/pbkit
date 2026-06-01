@@ -233,4 +233,39 @@ describe("generate", () => {
     expect(commentsExpand).toContain('"article"')
     expect(commentsExpand).toContain('"author"')
   })
+
+  test("omits expand paths into excluded target collections (keeps XxxExpand and XxxRelations consistent)", () => {
+    const output = generate(ir, { collections: { users: { exclude: true } } })
+    // articles.author -> users (excluded): must not appear in either representation
+    const articlesExpand = output.match(/export type ArticlesExpand = (.+)/)?.[1]
+    expect(articlesExpand).not.toContain('"author"')
+    expect(articlesExpand).toContain('"categories"')
+    expect(output).not.toContain('author: { rec: UsersRecord')
+    // comments.author -> users (excluded), incl. the nested article.author path
+    const commentsExpand = output.match(/export type CommentsExpand = (.+)/)?.[1]
+    expect(commentsExpand).not.toContain('"author"')
+    expect(commentsExpand).not.toContain('"article.author"')
+  })
+
+  test("generates a relations map for collections with forward relations", () => {
+    const output = generate(ir)
+    expect(output).toContain("export type ArticlesRelations = {")
+    expect(output).toContain('author: { rec: UsersRecord; coll: "users"; multi: false }')
+    expect(output).toContain('categories: { rec: CategoriesRecord; coll: "categories"; multi: true }')
+  })
+
+  test("skips relations map for collections without forward relations", () => {
+    const output = generate(ir)
+    expect(output).not.toContain("CategoriesRelations")
+    expect(output).not.toContain("UsersRelations")
+  })
+
+  test("emits the global RelationsMap and expand helpers once", () => {
+    const output = generate(ir)
+    expect(output).toContain("type RelationsMap = {")
+    expect(output).toContain('"users": {}')
+    expect(output).toContain('"articles": ArticlesRelations')
+    expect(output).toContain("export type BuildExpand<R, P extends string>")
+    expect(output).toContain("type Split<S extends string>")
+  })
 })

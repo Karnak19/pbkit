@@ -5,7 +5,7 @@ exports[`generateSdk snapshot 1`] = `
 
 import { client } from "./client.gen"
 import type { PbClient } from "./client.gen"
-import type { UsersRecord, UsersCreate, UsersUpdate, CategoriesRecord, CategoriesCreate, CategoriesUpdate, ArticlesRecord, ArticlesCreate, ArticlesUpdate, ArticlesExpand, CommentsRecord, CommentsCreate, CommentsUpdate, CommentsExpand } from "./types.gen"
+import type { UsersRecord, UsersCreate, UsersUpdate, CategoriesRecord, CategoriesCreate, CategoriesUpdate, ArticlesRecord, ArticlesCreate, ArticlesUpdate, ArticlesRelations, CommentsRecord, CommentsCreate, CommentsUpdate, CommentsRelations, BuildExpand, Split } from "./types.gen"
 
 export type { PbClient }
 
@@ -173,24 +173,24 @@ export async function deleteCategory(id: string, opts?: { client?: PbClient; fet
 
 // --- Articles ---
 
-export async function getArticle(id: string, options?: Omit<RequestOptions, "expand"> & { expand?: ArticlesExpand }, opts?: { client?: PbClient }): Promise<ArticlesRecord> {
+export async function getArticle<const S extends string | undefined = undefined>(id: string, options?: Omit<RequestOptions, "expand"> & { expand?: S }, opts?: { client?: PbClient }): Promise<ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {})> {
   const pb = opts?.client ?? client
-  return pb.collection("articles").getOne(id, options) as Promise<ArticlesRecord>
+  return pb.collection("articles").getOne(id, options) as Promise<ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {})>
 }
 
-export async function getFirstArticle(filter: string, options?: Omit<RequestOptions, "expand"> & { expand?: ArticlesExpand }, opts?: { client?: PbClient }): Promise<ArticlesRecord> {
+export async function getFirstArticle<const S extends string | undefined = undefined>(filter: string, options?: Omit<RequestOptions, "expand"> & { expand?: S }, opts?: { client?: PbClient }): Promise<ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {})> {
   const pb = opts?.client ?? client
-  return pb.collection("articles").getFirstListItem(filter, options) as Promise<ArticlesRecord>
+  return pb.collection("articles").getFirstListItem(filter, options) as Promise<ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {})>
 }
 
-export async function listArticles(params?: ListParams, opts?: { client?: PbClient }): Promise<ListResult<ArticlesRecord>> {
+export async function listArticles<const S extends string | undefined = undefined>(params?: Omit<ListParams, "expand"> & { expand?: S }, opts?: { client?: PbClient }): Promise<ListResult<ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {})>> {
   const pb = opts?.client ?? client
-  return pb.collection("articles").getList(params?.page, params?.perPage, params) as Promise<ListResult<ArticlesRecord>>
+  return pb.collection("articles").getList(params?.page, params?.perPage, params) as Promise<ListResult<ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {})>>
 }
 
-export async function getFullListArticles(params?: ListParams, opts?: { client?: PbClient }): Promise<ArticlesRecord[]> {
+export async function getFullListArticles<const S extends string | undefined = undefined>(params?: Omit<ListParams, "expand"> & { expand?: S }, opts?: { client?: PbClient }): Promise<(ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {}))[]> {
   const pb = opts?.client ?? client
-  return pb.collection("articles").getFullList(params) as Promise<ArticlesRecord[]>
+  return pb.collection("articles").getFullList(params) as Promise<(ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {}))[]>
 }
 
 export async function createArticle(data: ArticlesCreate, opts?: { client?: PbClient; fetch?: typeof fetch }): Promise<ArticlesRecord> {
@@ -211,24 +211,24 @@ export async function deleteArticle(id: string, opts?: { client?: PbClient; fetc
 
 // --- Comments ---
 
-export async function getComment(id: string, options?: Omit<RequestOptions, "expand"> & { expand?: CommentsExpand }, opts?: { client?: PbClient }): Promise<CommentsRecord> {
+export async function getComment<const S extends string | undefined = undefined>(id: string, options?: Omit<RequestOptions, "expand"> & { expand?: S }, opts?: { client?: PbClient }): Promise<CommentsRecord & (S extends string ? { expand?: BuildExpand<CommentsRelations, Split<S>> } : {})> {
   const pb = opts?.client ?? client
-  return pb.collection("comments").getOne(id, options) as Promise<CommentsRecord>
+  return pb.collection("comments").getOne(id, options) as Promise<CommentsRecord & (S extends string ? { expand?: BuildExpand<CommentsRelations, Split<S>> } : {})>
 }
 
-export async function getFirstComment(filter: string, options?: Omit<RequestOptions, "expand"> & { expand?: CommentsExpand }, opts?: { client?: PbClient }): Promise<CommentsRecord> {
+export async function getFirstComment<const S extends string | undefined = undefined>(filter: string, options?: Omit<RequestOptions, "expand"> & { expand?: S }, opts?: { client?: PbClient }): Promise<CommentsRecord & (S extends string ? { expand?: BuildExpand<CommentsRelations, Split<S>> } : {})> {
   const pb = opts?.client ?? client
-  return pb.collection("comments").getFirstListItem(filter, options) as Promise<CommentsRecord>
+  return pb.collection("comments").getFirstListItem(filter, options) as Promise<CommentsRecord & (S extends string ? { expand?: BuildExpand<CommentsRelations, Split<S>> } : {})>
 }
 
-export async function listComments(params?: ListParams, opts?: { client?: PbClient }): Promise<ListResult<CommentsRecord>> {
+export async function listComments<const S extends string | undefined = undefined>(params?: Omit<ListParams, "expand"> & { expand?: S }, opts?: { client?: PbClient }): Promise<ListResult<CommentsRecord & (S extends string ? { expand?: BuildExpand<CommentsRelations, Split<S>> } : {})>> {
   const pb = opts?.client ?? client
-  return pb.collection("comments").getList(params?.page, params?.perPage, params) as Promise<ListResult<CommentsRecord>>
+  return pb.collection("comments").getList(params?.page, params?.perPage, params) as Promise<ListResult<CommentsRecord & (S extends string ? { expand?: BuildExpand<CommentsRelations, Split<S>> } : {})>>
 }
 
-export async function getFullListComments(params?: ListParams, opts?: { client?: PbClient }): Promise<CommentsRecord[]> {
+export async function getFullListComments<const S extends string | undefined = undefined>(params?: Omit<ListParams, "expand"> & { expand?: S }, opts?: { client?: PbClient }): Promise<(CommentsRecord & (S extends string ? { expand?: BuildExpand<CommentsRelations, Split<S>> } : {}))[]> {
   const pb = opts?.client ?? client
-  return pb.collection("comments").getFullList(params) as Promise<CommentsRecord[]>
+  return pb.collection("comments").getFullList(params) as Promise<(CommentsRecord & (S extends string ? { expand?: BuildExpand<CommentsRelations, Split<S>> } : {}))[]>
 }
 
 export async function createComment(data: CommentsCreate, opts?: { client?: PbClient; fetch?: typeof fetch }): Promise<CommentsRecord> {

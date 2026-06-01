@@ -2,7 +2,7 @@
 title: Programmatic API
 description: Use pbkit's API directly in your own tooling.
 sidebar:
-  order: 1
+  order: 7
 ---
 
 You can use pbkit programmatically instead of the CLI. Import functions directly from `@karnak19/pbkit`.

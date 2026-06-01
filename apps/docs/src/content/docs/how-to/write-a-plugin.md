@@ -1,8 +1,8 @@
 ---
-title: Plugin Authoring
+title: Write a plugin
 description: How to write a custom pbkit plugin.
 sidebar:
-  order: 2
+  order: 5
 ---
 
 pbkit plugins receive the parsed schema and return generated files. A plugin is an object implementing the `PbkitPlugin` interface.

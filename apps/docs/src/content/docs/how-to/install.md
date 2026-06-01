@@ -1,5 +1,5 @@
 ---
-title: Installation
+title: Install pbkit
 description: How to install pbkit in your project.
 sidebar:
   order: 1
@@ -34,5 +34,5 @@ Usage:
 
 ## Next steps
 
-- Follow the [Quick Start](/getting-started/quick-start) guide to generate your first SDK
-- Read the [configuration reference](/configuration/pbkit-config) for all available options
+- Follow [Your first typed SDK](/tutorials/your-first-sdk) to generate your first SDK
+- Read the [configuration reference](/reference/configuration) for all available options

@@ -1,8 +1,8 @@
 ---
-title: Generated Types
+title: Generated types
 description: TypeScript interfaces generated for each PocketBase collection.
 sidebar:
-  order: 1
+  order: 3
 ---
 
 pbkit generates `types.gen.ts` containing TypeScript types for every non-excluded collection.

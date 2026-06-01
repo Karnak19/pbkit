@@ -1,8 +1,8 @@
 ---
-title: TanStack Query Plugin
+title: Add TanStack Query
 description: Generate queryOptions, mutationOptions, and query key helpers for TanStack Query.
 sidebar:
-  order: 1
+  order: 3
 ---
 
 The `@karnak19/pbkit-tanstack` package provides a plugin that generates framework-agnostic TanStack Query options and query key helpers.

@@ -1,5 +1,5 @@
 ---
-title: CLI Usage
+title: CLI
 description: pbkit command-line interface reference.
 sidebar:
   order: 1

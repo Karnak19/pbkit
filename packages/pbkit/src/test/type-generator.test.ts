@@ -64,6 +64,23 @@ describe("fieldTypeToTs", () => {
     const f = field("file", { maxSelect: 3 })
     expect(fieldTypeToTs(f, {})).toBe("string[]")
   })
+
+  // Regression (#28): PocketBase stores single relation/select/file fields with
+  // maxSelect: 0, not 1. These must still be treated as single values.
+  test("relation maxSelect=0 → string", () => {
+    const f = field("relation", { maxSelect: 0, collectionId: "abc" })
+    expect(fieldTypeToTs(f, {})).toBe("string")
+  })
+
+  test("select maxSelect=0 → union literal (single)", () => {
+    const f = field("select", { maxSelect: 0, values: ["draft", "published"] })
+    expect(fieldTypeToTs(f, {})).toBe('"draft" | "published"')
+  })
+
+  test("file maxSelect=0 → string", () => {
+    const f = field("file", { maxSelect: 0 })
+    expect(fieldTypeToTs(f, {})).toBe("string")
+  })
 })
 
 describe("generate", () => {

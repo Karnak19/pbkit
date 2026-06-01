@@ -5,7 +5,7 @@ import type {
   CollectionsConfig,
 } from "@karnak19/pbkit";
 import type { PbkitPlugin, PluginContext, PluginOutputFile } from "@karnak19/pbkit";
-import { isCollectionExcluded } from "@karnak19/pbkit";
+import { isCollectionExcluded, isMultipleField } from "@karnak19/pbkit";
 
 function pascalCase(name: string): string {
   return name
@@ -66,25 +66,24 @@ function fieldToZod(field: CollectionField): string {
       schema = "z.string().datetime({ offset: true })";
       break;
     case "select": {
+      const multiple = isMultipleField(field);
       const values = field.options.values;
       if (values && values.length > 0) {
         const union = values.map((v) => JSON.stringify(v)).join(", ");
-        schema = field.options.maxSelect === 1
-          ? `z.enum([${union}])`
-          : `z.array(z.enum([${union}]))`;
+        schema = multiple
+          ? `z.array(z.enum([${union}]))`
+          : `z.enum([${union}])`;
         if (field.options.maxSelect && field.options.maxSelect > 1) {
           schema += `.max(${field.options.maxSelect})`;
         }
       } else {
-        schema = field.options.maxSelect === 1 ? "z.string()" : "z.array(z.string())";
+        schema = multiple ? "z.array(z.string())" : "z.string()";
       }
       break;
     }
     case "relation":
-      schema = field.options.maxSelect === 1 ? "z.string()" : "z.array(z.string())";
-      break;
     case "file":
-      schema = field.options.maxSelect === 1 ? "z.string()" : "z.array(z.string())";
+      schema = isMultipleField(field) ? "z.array(z.string())" : "z.string()";
       break;
     case "json":
       schema = "z.unknown()";

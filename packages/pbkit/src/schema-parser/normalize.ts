@@ -10,6 +10,15 @@ import type {
 
 const FIELD_CORE_KEYS = new Set(["id", "name", "type", "system", "required"])
 
+/**
+ * PocketBase treats a relation/select/file field as "multiple" only when
+ * maxSelect is greater than 1. A maxSelect of 0 or 1 (or unset) is a single
+ * value — matching PocketBase's own `IsMultiple()` (maxSelect > 1).
+ */
+export function isMultipleField(field: CollectionField): boolean {
+  return (field.options.maxSelect ?? 0) > 1
+}
+
 export function normalizeField(raw: Record<string, unknown>): CollectionField {
   const options: FieldOptions = {}
   for (const [key, value] of Object.entries(raw)) {
@@ -57,7 +66,7 @@ export function extractRelations(collections: CollectionSchema[]): Relation[] {
         collectionName: collection.name,
         targetCollectionId: targetId,
         targetCollectionName: targetName,
-        multiple: field.options.maxSelect !== 1,
+        multiple: isMultipleField(field),
         cascadeDelete: field.options.cascadeDelete ?? false,
       })
     }

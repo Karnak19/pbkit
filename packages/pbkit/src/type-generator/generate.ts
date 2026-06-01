@@ -1,4 +1,5 @@
 import type { SchemaIR, CollectionSchema, CollectionField } from "../schema-parser"
+import { isMultipleField } from "../schema-parser"
 import type { GenerateOptions } from "./types"
 import { isCollectionExcluded, type CollectionsConfig } from "../config"
 
@@ -26,17 +27,17 @@ export function fieldTypeToTs(field: CollectionField, options: GenerateOptions):
     case "date":
       return options.dateStrings === false ? "Date" : "string"
     case "select": {
+      const multiple = isMultipleField(field)
       const values = field.options.values
       if (values && values.length > 0) {
         const union = values.map(v => JSON.stringify(v)).join(" | ")
-        return field.options.maxSelect === 1 ? union : `(${union})[]`
+        return multiple ? `(${union})[]` : union
       }
-      return field.options.maxSelect === 1 ? "string" : "string[]"
+      return multiple ? "string[]" : "string"
     }
     case "relation":
-      return field.options.maxSelect === 1 ? "string" : "string[]"
     case "file":
-      return field.options.maxSelect === 1 ? "string" : "string[]"
+      return isMultipleField(field) ? "string[]" : "string"
     case "json":
       return "unknown"
     case "password":

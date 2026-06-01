@@ -1,5 +1,12 @@
 # @karnak19/pbkit-tanstack
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [1d3af3f]
+  - @karnak19/pbkit@0.4.0
+
 ## 0.2.1
 
 ### Patch Changes

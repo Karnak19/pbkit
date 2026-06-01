@@ -1,5 +1,12 @@
 # @karnak19/pbkit-realtime
 
+## 0.1.1
+
+### Patch Changes
+
+- Updated dependencies [1d3af3f]
+  - @karnak19/pbkit@0.4.0
+
 ## 0.1.0
 
 ### Minor Changes

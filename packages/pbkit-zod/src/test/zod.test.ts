@@ -129,6 +129,30 @@ describe("generateZod", () => {
   });
 });
 
+describe("generateZod single-value fields with maxSelect=0 (regression #28)", () => {
+  // PocketBase stores single relation/select/file fields with maxSelect: 0.
+  const ir0 = parseJson([
+    {
+      id: "c1",
+      name: "things",
+      type: "base",
+      fields: [
+        { name: "ref", type: "relation", system: false, required: false, maxSelect: 0, collectionId: "abc" },
+        { name: "status", type: "select", system: false, required: false, maxSelect: 0, values: ["a", "b"] },
+        { name: "doc", type: "file", system: false, required: false, maxSelect: 0 },
+      ],
+    },
+  ]);
+  const out = generateZod(ir0, { ir: ir0, typesImport: "./types.gen", sdkImport: "./sdk.gen" });
+
+  test("relation/select/file are single, not arrays", () => {
+    expect(out).toContain("ref: z.string()");
+    expect(out).toContain('status: z.enum(["a", "b"])');
+    expect(out).toContain("doc: z.string()");
+    expect(out).not.toContain("z.array(");
+  });
+});
+
 describe("zodPlugin", () => {
   test("has correct name", () => {
     expect(zodPlugin.name).toBe("@karnak19/pbkit-zod");

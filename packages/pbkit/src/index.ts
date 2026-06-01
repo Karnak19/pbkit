@@ -7,6 +7,7 @@ export {
   normalizeCollection,
   normalizeField,
   extractRelations,
+  isMultipleField,
 } from "./schema-parser";
 
 export type {

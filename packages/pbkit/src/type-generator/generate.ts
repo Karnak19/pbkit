@@ -100,6 +100,7 @@ function getExpandPaths(
   maxDepth: number,
   depth: number,
   visited: Set<string>,
+  isExcluded: (name: string) => boolean,
 ): string[] {
   if (depth >= maxDepth || visited.has(collectionName)) return []
   visited.add(collectionName)
@@ -111,15 +112,18 @@ function getExpandPaths(
 
   for (const field of col.fields) {
     if (field.type !== "relation") continue
-    paths.push(field.name)
 
     const targetName = ir.collections.find(
       c => c.id === field.options.collectionId,
     )?.name
+    // Don't advertise a path into an excluded collection: its XxxRecord isn't
+    // generated, and XxxRelations omits it, so the two would disagree.
+    if (targetName && isExcluded(targetName)) continue
+    paths.push(field.name)
     if (!targetName) continue
 
     const nextVisited = new Set(visited)
-    for (const deep of getExpandPaths(ir, targetName, maxDepth, depth + 1, nextVisited)) {
+    for (const deep of getExpandPaths(ir, targetName, maxDepth, depth + 1, nextVisited, isExcluded)) {
       paths.push(`${field.name}.${deep}`)
     }
   }
@@ -127,8 +131,13 @@ function getExpandPaths(
   return paths
 }
 
-function expandType(col: CollectionSchema, ir: SchemaIR, maxDepth: number): string | null {
-  const paths = getExpandPaths(ir, col.name, maxDepth, 0, new Set())
+function expandType(
+  col: CollectionSchema,
+  ir: SchemaIR,
+  maxDepth: number,
+  isExcluded: (name: string) => boolean,
+): string | null {
+  const paths = getExpandPaths(ir, col.name, maxDepth, 0, new Set(), isExcluded)
   if (paths.length === 0) return null
   const name = pascalCase(col.name)
   const union = paths.map(p => JSON.stringify(p)).join(" | ")
@@ -225,7 +234,7 @@ export function generate(ir: SchemaIR, options: GenerateOptions & { collections?
     parts.push("")
     parts.push(`export type ${name}Update = Partial<${name}Create>`)
     parts.push("")
-    const exp = expandType(col, ir, expandDepth)
+    const exp = expandType(col, ir, expandDepth, isExcluded)
     if (exp) {
       parts.push(exp)
       parts.push("")

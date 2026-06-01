@@ -1,6 +1,6 @@
 {
   "name": "@karnak19/pbkit-realtime",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Realtime subscription plugin for pbkit",
   "homepage": "https://karnak19.github.io/pbkit/",
   "repository": {

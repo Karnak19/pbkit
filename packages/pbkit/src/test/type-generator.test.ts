@@ -233,4 +233,26 @@ describe("generate", () => {
     expect(commentsExpand).toContain('"article"')
     expect(commentsExpand).toContain('"author"')
   })
+
+  test("generates a relations map for collections with forward relations", () => {
+    const output = generate(ir)
+    expect(output).toContain("export type ArticlesRelations = {")
+    expect(output).toContain('author: { rec: UsersRecord; coll: "users"; multi: false }')
+    expect(output).toContain('categories: { rec: CategoriesRecord; coll: "categories"; multi: true }')
+  })
+
+  test("skips relations map for collections without forward relations", () => {
+    const output = generate(ir)
+    expect(output).not.toContain("CategoriesRelations")
+    expect(output).not.toContain("UsersRelations")
+  })
+
+  test("emits the global RelationsMap and expand helpers once", () => {
+    const output = generate(ir)
+    expect(output).toContain("type RelationsMap = {")
+    expect(output).toContain('"users": {}')
+    expect(output).toContain('"articles": ArticlesRelations')
+    expect(output).toContain("export type BuildExpand<R, P extends string>")
+    expect(output).toContain("type Split<S extends string>")
+  })
 })

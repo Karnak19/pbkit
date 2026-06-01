@@ -82,7 +82,7 @@ describe("generateProject", () => {
     expect(types).toContain("ArticlesRecord")
 
     const sdk = readFileSync(resolve(outDir, "sdk.gen.ts"), "utf-8")
-    expect(sdk).toContain("getArticle(")
+    expect(sdk).toContain("getArticle<")
     expect(sdk).toContain("createArticle(")
   })
 

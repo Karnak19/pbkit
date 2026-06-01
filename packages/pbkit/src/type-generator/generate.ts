@@ -135,6 +135,45 @@ function expandType(col: CollectionSchema, ir: SchemaIR, maxDepth: number): stri
   return `export type ${name}Expand = ${union}`
 }
 
+// Forward relations of a collection whose target is generated, used to build
+// the typed `.expand` result shape. Returns null when there are none.
+function relationsMapType(
+  col: CollectionSchema,
+  ir: SchemaIR,
+  isExcluded: (name: string) => boolean,
+): string | null {
+  const rels = ir.relations.filter(
+    r => r.collectionName === col.name && !isExcluded(r.targetCollectionName),
+  )
+  if (rels.length === 0) return null
+  const name = pascalCase(col.name)
+  const entries = rels.map(r => {
+    const rec = `${pascalCase(r.targetCollectionName)}Record`
+    const coll = JSON.stringify(r.targetCollectionName)
+    return `  ${r.fieldName}: { rec: ${rec}; coll: ${coll}; multi: ${r.multiple} }`
+  })
+  return `export type ${name}Relations = {\n${entries.join("\n")}\n}`
+}
+
+// Hand-authored generic machinery (emitted once) that parses a PocketBase
+// comma-separated expand string literal into the nested `.expand` result shape.
+const EXPAND_HELPERS = `type Trim<S extends string> = S extends \` \${infer R}\` ? Trim<R> : S extends \`\${infer R} \` ? Trim<R> : S
+type Split<S extends string> = S extends \`\${infer H},\${infer T}\` ? Trim<H> | Split<T> : Trim<S>
+type Head<P extends string> = P extends \`\${infer H}.\${string}\` ? H : P
+type Under<P extends string, K extends string> = P extends \`\${K}.\${infer R}\` ? R : never
+type RelEntry = { rec: unknown; coll: keyof RelationsMap; multi: boolean }
+type ExpandValue<E extends RelEntry, Rest extends string> = [Rest] extends [never]
+  ? E["rec"]
+  : E["rec"] & { expand?: BuildExpand<RelationsMap[E["coll"]], Rest> }
+export type BuildExpand<R, P extends string> = {
+  [K in Head<P> & keyof R]: R[K] extends RelEntry
+    ? R[K]["multi"] extends true
+      ? ExpandValue<R[K], Under<P, K>>[]
+      : ExpandValue<R[K], Under<P, K>>
+    : never
+}
+export type { Split }`
+
 export function generate(ir: SchemaIR, options: GenerateOptions & { collections?: CollectionsConfig } = {}): string {
   const opts: GenerateOptions = {
     dateStrings: options.dateStrings ?? true,
@@ -143,7 +182,15 @@ export function generate(ir: SchemaIR, options: GenerateOptions & { collections?
   }
   const expandDepth = options.expandDepth ?? 2
 
-  const cols = ir.collections.filter(c => !isCollectionExcluded(c.name, options.collections))
+  const isExcluded = (name: string) => isCollectionExcluded(name, options.collections)
+  const cols = ir.collections.filter(c => !isExcluded(c.name))
+
+  const relationsMaps = new Map<string, string>()
+  for (const col of cols) {
+    const rm = relationsMapType(col, ir, isExcluded)
+    if (rm) relationsMaps.set(col.name, rm)
+  }
+  const hasAnyRelations = relationsMaps.size > 0
 
   const parts: string[] = []
 
@@ -183,6 +230,21 @@ export function generate(ir: SchemaIR, options: GenerateOptions & { collections?
       parts.push(exp)
       parts.push("")
     }
+    const rm = relationsMaps.get(col.name)
+    if (rm) {
+      parts.push(rm)
+      parts.push("")
+    }
+  }
+
+  if (hasAnyRelations) {
+    const mapEntries = cols
+      .map(c => `  ${JSON.stringify(c.name)}: ${relationsMaps.has(c.name) ? `${pascalCase(c.name)}Relations` : "{}"}`)
+      .join("\n")
+    parts.push(`type RelationsMap = {\n${mapEntries}\n}`)
+    parts.push("")
+    parts.push(EXPAND_HELPERS)
+    parts.push("")
   }
 
   const names = cols.map(c => JSON.stringify(c.name)).join(" | ")

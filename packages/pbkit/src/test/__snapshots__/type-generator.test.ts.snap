@@ -85,6 +85,11 @@ export type ArticlesUpdate = Partial<ArticlesCreate>
 
 export type ArticlesExpand = "author" | "categories"
 
+export type ArticlesRelations = {
+  author: { rec: UsersRecord; coll: "users"; multi: false }
+  categories: { rec: CategoriesRecord; coll: "categories"; multi: true }
+}
+
 // Comments
 
 export type CommentsRecord = BaseRecord & {
@@ -102,6 +107,35 @@ export type CommentsCreate = {
 export type CommentsUpdate = Partial<CommentsCreate>
 
 export type CommentsExpand = "article" | "article.author" | "article.categories" | "author"
+
+export type CommentsRelations = {
+  article: { rec: ArticlesRecord; coll: "articles"; multi: false }
+  author: { rec: UsersRecord; coll: "users"; multi: false }
+}
+
+type RelationsMap = {
+  "users": {}
+  "categories": {}
+  "articles": ArticlesRelations
+  "comments": CommentsRelations
+}
+
+type Trim<S extends string> = S extends \` \${infer R}\` ? Trim<R> : S extends \`\${infer R} \` ? Trim<R> : S
+type Split<S extends string> = S extends \`\${infer H},\${infer T}\` ? Trim<H> | Split<T> : Trim<S>
+type Head<P extends string> = P extends \`\${infer H}.\${string}\` ? H : P
+type Under<P extends string, K extends string> = P extends \`\${K}.\${infer R}\` ? R : never
+type RelEntry = { rec: unknown; coll: keyof RelationsMap; multi: boolean }
+type ExpandValue<E extends RelEntry, Rest extends string> = [Rest] extends [never]
+  ? E["rec"]
+  : E["rec"] & { expand?: BuildExpand<RelationsMap[E["coll"]], Rest> }
+export type BuildExpand<R, P extends string> = {
+  [K in Head<P> & keyof R]: R[K] extends RelEntry
+    ? R[K]["multi"] extends true
+      ? ExpandValue<R[K], Under<P, K>>[]
+      : ExpandValue<R[K], Under<P, K>>
+    : never
+}
+export type { Split }
 
 export type CollectionName = "users" | "categories" | "articles" | "comments"
 "

@@ -11,7 +11,7 @@ Use pbkit when a project needs type-safe TypeScript access to a PocketBase backe
 
 ## What pbkit Generates
 
-- `types.gen.ts`: TypeScript types for each non-excluded collection, including `XxxRecord`, `XxxCreate`, `XxxUpdate`, `XxxExpand`, and `CollectionName`.
+- `types.gen.ts`: TypeScript types for each non-excluded collection, including `XxxRecord`, `XxxCreate`, `XxxUpdate`, `XxxExpand`, `XxxRelations` (the map powering typed `.expand` results), and `CollectionName`.
 - `client.gen.ts`: Default PocketBase client singleton and `PbClient` type export.
 - `sdk.gen.ts`: Typed CRUD functions using the singleton client (with optional per-call override).
 - `realtime.gen.ts`: Typed realtime subscription helpers when using `@karnak19/pbkit-realtime`.
@@ -172,6 +172,7 @@ const article = await getArticle("RECORD_ID")
 const articleWithAuthor = await getArticle("RECORD_ID", {
   expand: "author",
 })
+// articleWithAuthor.expand?.author is typed as UsersRecord
 
 const page = await listArticles({
   page: 1,
@@ -341,7 +342,7 @@ export default {
 - Install `pocketbase` in the consuming app; `client.gen.ts` imports it unless `sdk.pbImport` is customized.
 - Do not edit generated files directly. Update `pbkit.config.ts` or the PocketBase schema, then rerun generation.
 - Treat PocketBase date values as strings unless the project explicitly sets `types.dateStrings: false`.
-- Expand types are string unions generated up to `types.expandDepth`; increase the depth only when deeper relation paths are needed.
+- Expand: read functions for collections with relations are generic over the `expand` string, so `record.expand?.x` is typed (single relation → record, multi → array, nested paths nest). The `expand` input is a plain string (no autocomplete); the `XxxExpand` union is still generated for reference. `XxxExpand` paths are generated up to `types.expandDepth`. Reverse `_via_` back-relations are not yet typed.
 - Excluded collections produce no types, SDK functions, or plugin output.
 - Disabled operations remove the corresponding SDK functions and TanStack mutation/query helpers.
 - PocketBase filters are still PocketBase filter strings; pbkit types function parameters but does not validate filter syntax.
@@ -356,7 +357,7 @@ When a project already uses [pocketbase-typegen](https://github.com/patmood/pock
 - Replace CLI flags with `pbkit.config.ts`. Flag mapping: `--url/--email/--password` → `input: { url, token }`; `--url` (public) → `input: "<url>"`; `--json <file>` → `input: "<file>"`. `--db <sqlite>` is **not** supported via config — switch to a URL or exported JSON. `--out <file>` → `output: "<dir>"` (a directory, cleared on each run).
 - Type name mapping: `XxxResponse` → `XxxRecord`; `XxxRecord` (input shape) → `XxxCreate` / `XxxUpdate`; `Collections` enum → `CollectionName` union; per-field `XxxStatusOptions` enums → inline string literal unions; `BaseSystemFields` → `BaseRecord`; `AuthSystemFields` → `AuthRecord`.
 - Call-site mapping: `pb.collection("articles").getOne(id)` → `getArticle(id)`; `.getFirstListItem(filter)` → `getFirstArticle(filter)`; `.getList(page, perPage)` → `listArticles({ page, perPage })`; `.getFullList()` → `getFullListArticles()`; `.create(data)` → `createArticle(data)`; `.update(id, data)` → `updateArticle(id, data)`; `.delete(id)` → `deleteArticle(id)`. Auth: `pb.collection("users").authWithPassword(...)` → `authUserWithPassword(...)`.
-- Expand no longer needs manual generics — the `expand` option is typed from the schema. Delete the `TypedPocketBase` cast and the old `pocketbase-types.ts` once imports are updated.
+- Expand no longer needs manual generics — `record.expand.x` is typed automatically from the `expand` string you pass. Delete the `TypedPocketBase` cast and the old `pocketbase-types.ts` once imports are updated.
 
 ## Agent Workflow
 

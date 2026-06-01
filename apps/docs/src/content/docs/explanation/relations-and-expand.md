@@ -34,8 +34,9 @@ pbkit enumerates these walks up to a maximum length and emits them as a union:
 export type CommentsExpand = "article" | "article.author" | "article.categories" | "author"
 ```
 
-This is why expand autocomplete only ever offers paths that actually exist in
-your schema — they are computed from the graph, not guessed.
+The same graph drives the `XxxRelations` map, which lets the SDK resolve the
+`expand` string you pass into a typed `.expand` result — the paths are computed
+from the graph, not guessed.
 
 ## Why depth is bounded
 

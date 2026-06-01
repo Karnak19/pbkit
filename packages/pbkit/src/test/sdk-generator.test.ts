@@ -56,10 +56,10 @@ describe("generateSdk", () => {
   });
 
   test("generates CRUD for base collections", () => {
-    expect(output).toContain("export async function getArticle(");
-    expect(output).toContain("export async function getFirstArticle(");
-    expect(output).toContain("export async function listArticles(");
-    expect(output).toContain("export async function getFullListArticles(");
+    expect(output).toContain("export async function getArticle<");
+    expect(output).toContain("export async function getFirstArticle<");
+    expect(output).toContain("export async function listArticles<");
+    expect(output).toContain("export async function getFullListArticles<");
     expect(output).toContain("export async function createArticle(");
     expect(output).toContain("export async function updateArticle(");
     expect(output).toContain("export async function deleteArticle(");
@@ -95,12 +95,12 @@ describe("generateSdk", () => {
   });
 
   test("singularizes collection names correctly", () => {
-    expect(output).toContain("getArticle(");
-    expect(output).toContain("listArticles(");
+    expect(output).toContain("getArticle<");
+    expect(output).toContain("listArticles<");
     expect(output).toContain("getCategory(");
     expect(output).toContain("listCategories(");
-    expect(output).toContain("getComment(");
-    expect(output).toContain("listComments(");
+    expect(output).toContain("getComment<");
+    expect(output).toContain("listComments<");
     expect(output).toContain("getUser(");
   });
 
@@ -150,27 +150,73 @@ describe("generateSdk", () => {
     expect(excluded).not.toContain("CommentsRecord");
   });
 
+  test("does not emit a typed expand when all of a collection's relation targets are excluded", () => {
+    // comments relates only to articles + users; excluding both leaves it with
+    // no generated relation target, so the type generator emits no
+    // CommentsRelations. The SDK must not reference it (regression: it used to
+    // import a non-existent CommentsRelations/BuildExpand/Split).
+    const out = generateSdk(ir, {
+      collections: { articles: { exclude: true }, users: { exclude: true } },
+    });
+    expect(out).not.toContain("CommentsRelations");
+    expect(out).not.toContain("BuildExpand");
+    expect(out).not.toContain("Split");
+    expect(out).toContain("getComment(id: string, options?: RequestOptions");
+  });
+
   test("skips disabled operations", () => {
     const partial = generateSdk(ir, {
       collections: { articles: { operations: { create: false, delete: false } } },
     });
     expect(partial).not.toContain("createArticle(");
     expect(partial).not.toContain("deleteArticle(");
-    expect(partial).toContain("getArticle(");
+    expect(partial).toContain("getArticle<");
     expect(partial).toContain("updateArticle(");
   });
 
-  test("imports Expand types for collections with relations", () => {
-    expect(output).toContain("ArticlesExpand");
-    expect(output).toContain("CommentsExpand");
+  test("imports Relations maps and expand helpers for collections with relations", () => {
+    expect(output).toContain("ArticlesRelations");
+    expect(output).toContain("CommentsRelations");
+    expect(output).toContain("BuildExpand");
+    expect(output).toContain("Split");
   });
 
-  test("uses typed expand in CRUD functions for collections with relations", () => {
+  test("read functions are generic over the expand string for collections with relations", () => {
     const getFn = output.slice(
       output.indexOf("export async function getArticle"),
-      output.indexOf("}", output.indexOf("export async function getArticle")) + 1,
+      output.indexOf("{\n", output.indexOf("export async function getArticle")),
     );
-    expect(getFn).toContain('Omit<RequestOptions, "expand"> & { expand?: ArticlesExpand }');
+    expect(getFn).toContain("getArticle<const S extends string | undefined = undefined>");
+    expect(getFn).toContain('options?: Omit<RequestOptions, "expand"> & { expand?: S }');
+    expect(getFn).toContain(
+      "Promise<ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {})>",
+    );
+  });
+
+  test("list functions thread the expand generic through ListParams", () => {
+    const listFn = output.slice(
+      output.indexOf("export async function listArticles"),
+      output.indexOf("{\n", output.indexOf("export async function listArticles")),
+    );
+    expect(listFn).toContain('params?: Omit<ListParams, "expand"> & { expand?: S }');
+    expect(listFn).toContain(
+      "Promise<ListResult<ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {})>>",
+    );
+  });
+
+  test("getFullList parenthesizes the intersection before the array", () => {
+    const fn = output.slice(
+      output.indexOf("export async function getFullListArticles"),
+      output.indexOf("{\n", output.indexOf("export async function getFullListArticles")),
+    );
+    expect(fn).toContain(
+      "Promise<(ArticlesRecord & (S extends string ? { expand?: BuildExpand<ArticlesRelations, Split<S>> } : {}))[]>",
+    );
+  });
+
+  test("read functions stay non-generic for collections without relations", () => {
+    expect(output).toContain("export async function getCategory(id: string, options?: RequestOptions");
+    expect(output).not.toContain("getCategory<");
   });
 
   test("uses plain RequestOptions for collections without relations", () => {

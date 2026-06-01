@@ -1,6 +1,6 @@
 {
   "name": "@karnak19/pbkit-zod",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Zod schema plugin for pbkit",
   "homepage": "https://karnak19.github.io/pbkit/",
   "repository": {

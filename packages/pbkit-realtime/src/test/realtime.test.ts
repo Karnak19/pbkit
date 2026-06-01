@@ -60,8 +60,8 @@ describe("generateRealtime", () => {
     expect(output).toContain("options?: { filter?: string; id?: string }");
   });
 
-  test("subscribe function returns Promise of unsubscribe function", () => {
-    expect(output).toContain("): Promise<() => void>");
+  test("subscribe function returns Promise of async unsubscribe function", () => {
+    expect(output).toContain("): Promise<() => Promise<void>>");
   });
 
   test("uses client.collection with correct name", () => {

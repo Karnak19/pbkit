@@ -225,11 +225,11 @@ const unsub = await subscribeToArticles((event: RealtimeEvent<ArticlesRecord>) =
   }
 }, { filter: 'status = "published"' })
 
-// Later
-unsub()
+// Later (unsubscribe is async)
+await unsub()
 ```
 
-Each `subscribeTo{Collection}()` function accepts a typed callback, optional `filter` (PocketBase filter string), optional `id` (subscribe to a specific record), and returns an unsubscribe function. The plugin respects `collections` config — excluded collections are skipped.
+Each `subscribeTo{Collection}()` function accepts a typed callback, optional `filter` (PocketBase filter string), optional `id` (subscribe to a specific record), and returns `Promise<() => Promise<void>>` — an async unsubscribe function. The plugin respects `collections` config — excluded collections are skipped.
 
 ## TanStack Query Integration
 

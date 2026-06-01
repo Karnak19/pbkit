@@ -53,13 +53,13 @@ export interface RealtimeEvent<T> {
 export function subscribeToArticles(
   callback: (event: RealtimeEvent<ArticlesRecord>) => void,
   options?: { filter?: string; id?: string },
-): Promise<() => void>
+): Promise<() => Promise<void>>
 ```
 
 Each function:
 - Accepts a typed callback receiving `RealtimeEvent<{Collection}Record>`
 - Accepts optional `filter` (PocketBase filter string) and `id` (subscribe to a specific record)
-- Returns `Promise<() => void>` — an async function that resolves with an unsubscribe callback
+- Returns `Promise<() => Promise<void>>` — resolves with an **async** unsubscribe callback (PocketBase's `UnsubscribeFunc`); `await` it to surface unsubscribe errors
 
 ## Usage example
 
@@ -81,7 +81,7 @@ const unsub = await subscribeToArticles((event) => {
 })
 
 // Later, when you no longer need the subscription
-unsub()
+await unsub()
 ```
 
 ### Subscribe with a filter
@@ -116,7 +116,7 @@ function LiveComments({ articleId }: { articleId: string }) {
   const [comments, setComments] = useState([])
 
   useEffect(() => {
-    let unsub: (() => void) | undefined
+    let unsub: (() => Promise<void>) | undefined
 
     subscribeToComments(
       (event) => {

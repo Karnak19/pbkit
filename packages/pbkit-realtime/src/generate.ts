@@ -13,7 +13,7 @@ function subscribeFunction(col: CollectionSchema): string[] {
   lines.push(`export async function ${fnName}(`);
   lines.push(`  callback: (event: RealtimeEvent<${recordType}>) => void,`);
   lines.push(`  options?: { filter?: string; id?: string },`);
-  lines.push(`): Promise<() => void> {`);
+  lines.push(`): Promise<() => Promise<void>> {`);
   lines.push(`  const target = options?.id ?? "*"`);
   lines.push(`  return client.collection(${c}).subscribe(target, (e) => {`);
   lines.push(`    callback({ action: e.action as RealtimeAction, record: e.record as ${recordType} })`);

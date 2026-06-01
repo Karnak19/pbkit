@@ -36,6 +36,9 @@
     "access": "public"
   },
   "license": "MIT",
+  "peerDependencies": {
+    "pocketbase": ">=0.21.0"
+  },
   "dependencies": {
     "@karnak19/pbkit": "workspace:*"
   },

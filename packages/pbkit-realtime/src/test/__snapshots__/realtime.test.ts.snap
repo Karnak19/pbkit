@@ -18,7 +18,7 @@ export interface RealtimeEvent<T> {
 export async function subscribeToUsers(
   callback: (event: RealtimeEvent<UsersRecord>) => void,
   options?: { filter?: string; id?: string },
-): Promise<() => void> {
+): Promise<() => Promise<void>> {
   const target = options?.id ?? "*"
   return client.collection("users").subscribe(target, (e) => {
     callback({ action: e.action as RealtimeAction, record: e.record as UsersRecord })
@@ -30,7 +30,7 @@ export async function subscribeToUsers(
 export async function subscribeToCategories(
   callback: (event: RealtimeEvent<CategoriesRecord>) => void,
   options?: { filter?: string; id?: string },
-): Promise<() => void> {
+): Promise<() => Promise<void>> {
   const target = options?.id ?? "*"
   return client.collection("categories").subscribe(target, (e) => {
     callback({ action: e.action as RealtimeAction, record: e.record as CategoriesRecord })
@@ -42,7 +42,7 @@ export async function subscribeToCategories(
 export async function subscribeToArticles(
   callback: (event: RealtimeEvent<ArticlesRecord>) => void,
   options?: { filter?: string; id?: string },
-): Promise<() => void> {
+): Promise<() => Promise<void>> {
   const target = options?.id ?? "*"
   return client.collection("articles").subscribe(target, (e) => {
     callback({ action: e.action as RealtimeAction, record: e.record as ArticlesRecord })
@@ -54,7 +54,7 @@ export async function subscribeToArticles(
 export async function subscribeToComments(
   callback: (event: RealtimeEvent<CommentsRecord>) => void,
   options?: { filter?: string; id?: string },
-): Promise<() => void> {
+): Promise<() => Promise<void>> {
   const target = options?.id ?? "*"
   return client.collection("comments").subscribe(target, (e) => {
     callback({ action: e.action as RealtimeAction, record: e.record as CommentsRecord })

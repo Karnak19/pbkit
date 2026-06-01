@@ -47,8 +47,8 @@ const unsub = await subscribeToArticles((event) => {
   }
 })
 
-// Later
-unsub()
+// Later (unsubscribe is async — await to surface errors)
+await unsub()
 ```
 
 The generated helpers use the PocketBase client directly, so they work with any

@@ -305,7 +305,7 @@ export default {
 
 When a project already uses [pocketbase-typegen](https://github.com/patmood/pocketbase-typegen), pbkit replaces both the generated types and the `TypedPocketBase` cast with generated SDK functions.
 
-- Swap dependencies: remove `pocketbase-typegen`, add `@karnak19/pbkit`. Keep `pocketbase`.
+- Swap dependencies: remove `pocketbase-typegen`, add `-d @karnak19/pbkit` (build-time tool → devDependency). Keep `pocketbase` as a runtime dependency.
 - Replace CLI flags with `pbkit.config.ts`. Flag mapping: `--url/--email/--password` → `input: { url, token }`; `--url` (public) → `input: "<url>"`; `--json <file>` → `input: "<file>"`. `--db <sqlite>` is **not** supported via config — switch to a URL or exported JSON. `--out <file>` → `output: "<dir>"` (a directory, cleared on each run).
 - Type name mapping: `XxxResponse` → `XxxRecord`; `XxxRecord` (input shape) → `XxxCreate` / `XxxUpdate`; `Collections` enum → `CollectionName` union; per-field `XxxStatusOptions` enums → inline string literal unions; `BaseSystemFields` → `BaseRecord`; `AuthSystemFields` → `AuthRecord`.
 - Call-site mapping: `pb.collection("articles").getOne(id)` → `getArticle(id)`; `.getFirstListItem(filter)` → `getFirstArticle(filter)`; `.getList(page, perPage)` → `listArticles({ page, perPage })`; `.getFullList()` → `getFullListArticles()`; `.create(data)` → `createArticle(data)`; `.update(id, data)` → `updateArticle(id, data)`; `.delete(id)` → `deleteArticle(id)`. Auth: `pb.collection("users").authWithPassword(...)` → `authUserWithPassword(...)`.

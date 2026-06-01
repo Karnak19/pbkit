@@ -30,8 +30,10 @@ pbkit is a build-time code generator, so install it as a devDependency. `pocketb
 For Realtime subscription generation:
 
 ```bash
-bun add @karnak19/pbkit-realtime
+bun add -d @karnak19/pbkit-realtime
 ```
+
+The plugin is build-time (devDependency); the generated helpers use the runtime `pocketbase` client.
 
 For TanStack Query generation:
 

@@ -1,8 +1,8 @@
 ---
-title: Field Type Mapping
+title: Field type mapping
 description: How PocketBase field types map to TypeScript types.
 sidebar:
-  order: 4
+  order: 5
 ---
 
 pbkit maps each PocketBase field type to a TypeScript type. The mapping is used in both `Record` and `Create` types.

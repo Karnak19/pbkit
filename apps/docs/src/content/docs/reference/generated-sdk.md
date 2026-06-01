@@ -2,7 +2,7 @@
 title: Generated SDK
 description: Typed CRUD functions wrapping the PocketBase JS SDK.
 sidebar:
-  order: 2
+  order: 4
 ---
 
 pbkit generates `sdk.gen.ts` with fully typed functions for every non-excluded collection.

@@ -1,5 +1,5 @@
 ---
-title: Collection Configuration
+title: Configure collections
 description: Exclude collections and control which CRUD operations are generated.
 sidebar:
   order: 2

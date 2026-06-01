@@ -21,36 +21,28 @@ export default defineConfig({
       plugins: [
         lucode({
           navLinks: [
-            { label: "Docs", link: "/getting-started/installation/" },
-            { label: "API", link: "/api/programmatic/" },
+            { label: "Docs", link: "/tutorials/your-first-sdk/" },
+            { label: "Reference", link: "/reference/cli/" },
           ],
         }),
       ],
       sidebar: [
         { label: "Home", link: "/" },
         {
-          label: "Getting Started",
-          autogenerate: { directory: "getting-started" },
+          label: "Tutorials",
+          autogenerate: { directory: "tutorials" },
         },
         {
-          label: "Configuration",
-          autogenerate: { directory: "configuration" },
+          label: "How-to Guides",
+          autogenerate: { directory: "how-to" },
         },
         {
-          label: "Generated Output",
-          autogenerate: { directory: "generated-output" },
+          label: "Reference",
+          autogenerate: { directory: "reference" },
         },
         {
-          label: "CLI",
-          autogenerate: { directory: "cli" },
-        },
-        {
-          label: "Plugins",
-          autogenerate: { directory: "plugins" },
-        },
-        {
-          label: "API",
-          autogenerate: { directory: "api" },
+          label: "Explanation",
+          autogenerate: { directory: "explanation" },
         },
       ],
       editLink: {

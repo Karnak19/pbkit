@@ -1,8 +1,8 @@
 ---
-title: Configuration Reference
+title: Configuration
 description: All options available in pbkit.config.ts.
 sidebar:
-  order: 1
+  order: 2
 ---
 
 `pbkit.config.ts` is the main configuration file. It must export a `PbkitConfig` object as the default export.
@@ -99,7 +99,7 @@ sdk: {
 
 ## `collections`
 
-Per-collection configuration. See the [Collections](/configuration/collections) page for details.
+Per-collection configuration. See [Configure collections](/how-to/configure-collections) for details.
 
 ```ts
 collections: {
@@ -110,7 +110,7 @@ collections: {
 
 ## `plugins`
 
-Array of pbkit plugins. See the [Plugins](/plugins/tanstack-query) section.
+Array of pbkit plugins. See [Add TanStack Query](/how-to/add-tanstack-query) and [Add Zod schemas](/how-to/add-zod-schemas).
 
 ```ts
 plugins: []

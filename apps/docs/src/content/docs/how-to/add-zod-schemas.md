@@ -1,16 +1,20 @@
 ---
-title: Zod Plugin
+title: Add Zod schemas
 description: Generate Zod schemas from PocketBase collection definitions.
 sidebar:
-  order: 2
+  order: 4
 ---
 
 The `@karnak19/pbkit-zod` package provides a plugin that generates [Zod](https://zod.dev) schemas from your PocketBase collections, preserving field constraints as validations.
 
 ## Install
 
+The plugin runs at generation time, so it is a dev dependency. `zod` is imported
+by the generated schemas at runtime.
+
 ```bash
-bun add @karnak19/pbkit-zod zod
+bun add -d @karnak19/pbkit-zod
+bun add zod
 ```
 
 ## Setup

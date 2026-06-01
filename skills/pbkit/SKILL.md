@@ -20,24 +20,29 @@ Use pbkit when a project needs type-safe TypeScript access to a PocketBase backe
 ## Install
 
 ```bash
-bun add @karnak19/pbkit pocketbase
+bun add -d @karnak19/pbkit
+bun add pocketbase
 ```
 
-`pocketbase` is a peer/runtime dependency for projects that use generated SDK functions.
+pbkit is a build-time code generator, so install it as a devDependency. `pocketbase` is a peer/runtime dependency for projects that use generated SDK functions, so it stays a regular dependency.
 
 For TanStack Query generation:
 
 ```bash
-bun add @karnak19/pbkit-tanstack @tanstack/query-core
+bun add -d @karnak19/pbkit-tanstack
+bun add @tanstack/query-core
 ```
 
-Install the framework adapter used by the app as well, such as `@tanstack/react-query`, `@tanstack/solid-query`, `@tanstack/svelte-query`, or `@tanstack/vue-query`.
+The plugin is build-time (devDependency); `@tanstack/query-core` is imported by generated code at runtime. Install the framework adapter used by the app as well, such as `@tanstack/react-query`, `@tanstack/solid-query`, `@tanstack/svelte-query`, or `@tanstack/vue-query`.
 
 For Zod schema generation:
 
 ```bash
-bun add @karnak19/pbkit-zod zod
+bun add -d @karnak19/pbkit-zod
+bun add zod
 ```
+
+The plugin is build-time (devDependency); `zod` is imported by the generated schemas at runtime.
 
 ## Configuration
 
@@ -301,6 +306,16 @@ export default {
 - `input` is not always a URL — it can be a local JSON file. Do not infer baseUrl from `input`.
 - Leave `sdk.baseUrl` empty when the app uses multiple PB clients — rely on `{ client }` overrides per call.
 
+## Migrating from pocketbase-typegen
+
+When a project already uses [pocketbase-typegen](https://github.com/patmood/pocketbase-typegen), pbkit replaces both the generated types and the `TypedPocketBase` cast with generated SDK functions.
+
+- Swap dependencies: remove `pocketbase-typegen`, add `-d @karnak19/pbkit` (build-time tool → devDependency). Keep `pocketbase` as a runtime dependency.
+- Replace CLI flags with `pbkit.config.ts`. Flag mapping: `--url/--email/--password` → `input: { url, token }`; `--url` (public) → `input: "<url>"`; `--json <file>` → `input: "<file>"`. `--db <sqlite>` is **not** supported via config — switch to a URL or exported JSON. `--out <file>` → `output: "<dir>"` (a directory, cleared on each run).
+- Type name mapping: `XxxResponse` → `XxxRecord`; `XxxRecord` (input shape) → `XxxCreate` / `XxxUpdate`; `Collections` enum → `CollectionName` union; per-field `XxxStatusOptions` enums → inline string literal unions; `BaseSystemFields` → `BaseRecord`; `AuthSystemFields` → `AuthRecord`.
+- Call-site mapping: `pb.collection("articles").getOne(id)` → `getArticle(id)`; `.getFirstListItem(filter)` → `getFirstArticle(filter)`; `.getList(page, perPage)` → `listArticles({ page, perPage })`; `.getFullList()` → `getFullListArticles()`; `.create(data)` → `createArticle(data)`; `.update(id, data)` → `updateArticle(id, data)`; `.delete(id)` → `deleteArticle(id)`. Auth: `pb.collection("users").authWithPassword(...)` → `authUserWithPassword(...)`.
+- Expand no longer needs manual generics — the `expand` option is typed from the schema. Delete the `TypedPocketBase` cast and the old `pocketbase-types.ts` once imports are updated.
+
 ## Agent Workflow
 
 1. Check for an existing `pbkit.config.ts` before adding a new one.
@@ -310,3 +325,4 @@ export default {
 5. Run `bunx pbkit generate` or `npx pbkit generate` after changing config or schema inputs.
 6. Import from generated files (`.gen.ts` suffix) instead of recreating PocketBase access wrappers by hand.
 7. For multi-client setups, leave `sdk.baseUrl` empty and pass `{ client }` override to SDK functions as needed.
+8. If the project uses `pocketbase-typegen`, follow the migration mapping above rather than adding pbkit alongside it.

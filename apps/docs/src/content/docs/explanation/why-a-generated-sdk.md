@@ -30,7 +30,7 @@ for a full mapping between the two.)
 
 ## What generating functions buys you
 
-**Discoverability.** Typing `getA…` surfaces `getArticle`, `getArticles` and
+**Discoverability.** Typing `getA…` surfaces `getArticle`, `getFirstArticle` and
 friends through normal autocomplete. There is no string collection name to
 remember or mistype — a wrong name is a missing import, caught immediately.
 

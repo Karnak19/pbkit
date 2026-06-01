@@ -207,7 +207,7 @@ autocomplete and no manual generics:
 const article = await getArticle("RECORD_ID", { expand: "author" })
 ```
 
-See [Expand Types](/explanation/relations-and-expand) for how expand paths are typed.
+See [Expand types](/reference/expand-types) for how expand paths are typed.
 
 ## Authentication
 

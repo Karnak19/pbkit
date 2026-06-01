@@ -12,8 +12,12 @@ sidebar:
 
 ## Install
 
+pbkit is a build-time code generator, so install it as a dev dependency. Keep
+`pocketbase` as a regular dependency — your app uses its SDK at runtime.
+
 ```bash
-bun add @karnak19/pbkit pocketbase
+bun add -d @karnak19/pbkit
+bun add pocketbase
 ```
 
 ## Verify

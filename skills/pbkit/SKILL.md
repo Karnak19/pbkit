@@ -20,24 +20,29 @@ Use pbkit when a project needs type-safe TypeScript access to a PocketBase backe
 ## Install
 
 ```bash
-bun add @karnak19/pbkit pocketbase
+bun add -d @karnak19/pbkit
+bun add pocketbase
 ```
 
-`pocketbase` is a peer/runtime dependency for projects that use generated SDK functions.
+pbkit is a build-time code generator, so install it as a devDependency. `pocketbase` is a peer/runtime dependency for projects that use generated SDK functions, so it stays a regular dependency.
 
 For TanStack Query generation:
 
 ```bash
-bun add @karnak19/pbkit-tanstack @tanstack/query-core
+bun add -d @karnak19/pbkit-tanstack
+bun add @tanstack/query-core
 ```
 
-Install the framework adapter used by the app as well, such as `@tanstack/react-query`, `@tanstack/solid-query`, `@tanstack/svelte-query`, or `@tanstack/vue-query`.
+The plugin is build-time (devDependency); `@tanstack/query-core` is imported by generated code at runtime. Install the framework adapter used by the app as well, such as `@tanstack/react-query`, `@tanstack/solid-query`, `@tanstack/svelte-query`, or `@tanstack/vue-query`.
 
 For Zod schema generation:
 
 ```bash
-bun add @karnak19/pbkit-zod zod
+bun add -d @karnak19/pbkit-zod
+bun add zod
 ```
+
+The plugin is build-time (devDependency); `zod` is imported by the generated schemas at runtime.
 
 ## Configuration
 

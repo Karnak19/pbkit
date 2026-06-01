@@ -9,8 +9,12 @@ The `@karnak19/pbkit-zod` package provides a plugin that generates [Zod](https:/
 
 ## Install
 
+The plugin runs at generation time, so it is a dev dependency. `zod` is imported
+by the generated schemas at runtime.
+
 ```bash
-bun add @karnak19/pbkit-zod zod
+bun add -d @karnak19/pbkit-zod
+bun add zod
 ```
 
 ## Setup

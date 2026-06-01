@@ -9,8 +9,12 @@ The `@karnak19/pbkit-tanstack` package provides a plugin that generates framewor
 
 ## Install
 
+The plugin runs at generation time, so it is a dev dependency.
+`@tanstack/query-core` is imported by the generated code at runtime.
+
 ```bash
-bun add @karnak19/pbkit-tanstack @tanstack/query-core
+bun add -d @karnak19/pbkit-tanstack
+bun add @tanstack/query-core
 ```
 
 ## Setup

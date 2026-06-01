@@ -26,12 +26,14 @@ sites.
 
 ## Step 1: Swap the dependencies
 
-Remove pocketbase-typegen and add pbkit. Keep `pocketbase` — both tools rely on
-the official SDK at runtime.
+Remove pocketbase-typegen and add pbkit. pbkit is a build-time code generator, so
+install it as a dev dependency — like pocketbase-typegen was. Keep `pocketbase`
+itself as a regular dependency, since your app uses its SDK at runtime.
 
 ```bash
 bun remove pocketbase-typegen
-bun add @karnak19/pbkit pocketbase
+bun add -d @karnak19/pbkit
+bun add pocketbase
 ```
 
 ## Step 2: Replace CLI flags with a config file
@@ -56,7 +58,7 @@ your old flags to config options:
 import type { PbkitConfig } from "@karnak19/pbkit"
 
 export default {
-  input: { url: "https://my-pb.example.com", token: "ADMIN_AUTH_TOKEN" },
+  input: { url: "https://my-pb.example.com", token: process.env.PB_ADMIN_TOKEN },
   output: "./src/generated",
   sdk: {
     baseUrl: "https://my-pb.example.com",
@@ -72,6 +74,14 @@ Use the table below to translate your input source:
 | `--url ...` (public schema) | `"https://my-pb.example.com"` |
 | `--json ./pb_schema.json` | `"./pb_schema.json"` |
 | `--db ./pb_data/data.db` | *not supported — see note below* |
+
+> **Note on the token:** Unlike pocketbase-typegen, pbkit does not take an email
+> and password — it expects a superuser auth `token`. Obtain one by authenticating
+> as a superuser against your instance
+> (`POST /api/collections/_superusers/auth-with-password`); the response's `token`
+> field is the value to use. A token is only needed for non-public schemas — if
+> `GET /api/collections` is publicly readable, pass just the URL. Avoid committing
+> the token: load it from an environment variable instead.
 
 > **Note on `--db`:** pbkit does not read the SQLite database file directly. If
 > you were generating from `--db`, switch to either a live URL or an
@@ -235,4 +245,4 @@ The full set of auth, password-reset, and verification functions is listed under
 
 - [Configuration Reference](/reference/configuration) — every available option
 - [Per-collection configuration](/how-to/configure-collections) — exclude collections or disable operations
-- [Add TanStack Query](/how-to/add-tanstack-query) — generate TanStack Query options or Zod schemas
+- [Add TanStack Query](/how-to/add-tanstack-query) or [Zod schemas](/how-to/add-zod-schemas) via plugins

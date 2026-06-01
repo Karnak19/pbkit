@@ -5,14 +5,7 @@ import type {
   CollectionsConfig,
 } from "@karnak19/pbkit";
 import type { PbkitPlugin, PluginContext, PluginOutputFile } from "@karnak19/pbkit";
-import { isCollectionExcluded, isMultipleField } from "@karnak19/pbkit";
-
-function pascalCase(name: string): string {
-  return name
-    .split(/[-_]/)
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join("");
-}
+import { isCollectionExcluded, isMultipleField, pascalCase } from "@karnak19/pbkit";
 
 const SYSTEM_SKIP = new Set(["tokenKey"]);
 const AUTH_SYSTEM = new Set(["email", "emailVisibility", "verified"]);

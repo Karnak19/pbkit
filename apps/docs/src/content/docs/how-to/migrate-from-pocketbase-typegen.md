@@ -2,7 +2,7 @@
 title: Migrating from pocketbase-typegen
 description: A step-by-step guide to moving an existing project from pocketbase-typegen to pbkit.
 sidebar:
-  order: 6
+  order: 7
 ---
 
 [pocketbase-typegen](https://github.com/patmood/pocketbase-typegen) generates a

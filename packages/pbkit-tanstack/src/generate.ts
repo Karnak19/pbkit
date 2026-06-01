@@ -1,14 +1,7 @@
 import type { SchemaIR, CollectionSchema, CollectionsConfig } from "@karnak19/pbkit";
 import type { PbkitPlugin, PluginContext, PluginOutputFile } from "@karnak19/pbkit";
-import { isCollectionExcluded, isOperationEnabled } from "@karnak19/pbkit";
+import { isCollectionExcluded, isOperationEnabled, pascalCase } from "@karnak19/pbkit";
 import type { OperationName } from "@karnak19/pbkit";
-
-function pascalCase(name: string): string {
-  return name
-    .split(/[-_]/)
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join("");
-}
 
 function singularize(name: string): string {
   if (name.endsWith("ies")) return name.slice(0, -3) + "y";

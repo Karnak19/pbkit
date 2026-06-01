@@ -1,0 +1,49 @@
+{
+  "name": "@karnak19/pbkit-realtime",
+  "version": "0.0.0",
+  "description": "Realtime subscription plugin for pbkit",
+  "homepage": "https://karnak19.github.io/pbkit/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Karnak19/pbkit.git",
+    "directory": "packages/pbkit-realtime"
+  },
+  "bugs": {
+    "url": "https://github.com/Karnak19/pbkit/issues"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "bun build src/index.ts --outdir=dist --target=node && tsc --emitDeclarationOnly",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "bun run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "pocketbase": ">=0.21.0"
+  },
+  "dependencies": {
+    "@karnak19/pbkit": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.13",
+    "typescript": "^6.0.0"
+  }
+}

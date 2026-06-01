@@ -32,6 +32,8 @@ export type { PbkitPlugin, PluginContext, PluginOutputFile } from "./plugin";
 export { isCollectionExcluded, isOperationEnabled, enabledOperations } from "./config";
 export type { OperationName, CollectionConfig, CollectionsConfig } from "./config";
 
+export { pascalCase } from "./utils";
+
 export type { PbkitConfig, InputConfig } from "./config";
 export { resolveConfigPath, findConfig } from "./config";
 export { generateProject } from "./generate";

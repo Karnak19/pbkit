@@ -129,9 +129,29 @@ function createSchema(col: CollectionSchema): string[] {
   return lines;
 }
 
+// Multiple relation/file fields support PocketBase's +/- update modifiers to
+// append, prepend, or remove individual values without replacing the array.
+function isModifierField(field: CollectionField): boolean {
+  if (field.type !== "relation" && field.type !== "file") return false;
+  return isMultipleField(field) && isCreateField(field);
+}
+
 function updateSchema(col: CollectionSchema): string[] {
   const name = pascalCase(col.name);
-  return [`export const ${name}UpdateSchema = ${name}CreateSchema.partial()`];
+  const modFields = col.fields.filter(isModifierField);
+  if (modFields.length === 0) {
+    return [`export const ${name}UpdateSchema = ${name}CreateSchema.partial()`];
+  }
+
+  const lines: string[] = [];
+  lines.push(`export const ${name}UpdateSchema = ${name}CreateSchema.partial().extend({`);
+  for (const f of modFields) {
+    for (const key of [`+${f.name}`, `${f.name}+`, `${f.name}-`]) {
+      lines.push(`  ${JSON.stringify(key)}: z.union([z.string(), z.array(z.string())]).optional(),`);
+    }
+  }
+  lines.push("})");
+  return lines;
 }
 
 export function generateZod(ir: SchemaIR, ctx: PluginContext): string {

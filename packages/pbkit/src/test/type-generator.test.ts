@@ -182,6 +182,21 @@ describe("generate", () => {
     expect(articles).toContain("status?:")
   })
 
+  test("adds +/- modifier keys for multiple relation fields in Update", () => {
+    const output = generate(ir)
+    const articlesUpdate = output.match(/export type ArticlesUpdate = [^\n]+(?:\n {2}[^\n]+)*\n}/)?.[0] ?? ""
+    expect(articlesUpdate).toContain("Partial<ArticlesCreate> & {")
+    expect(articlesUpdate).toContain('"+categories"?: string | string[]')
+    expect(articlesUpdate).toContain('"categories+"?: string | string[]')
+    expect(articlesUpdate).toContain('"categories-"?: string | string[]')
+  })
+
+  test("keeps plain Partial Update for collections without multi relation/file fields", () => {
+    const output = generate(ir)
+    expect(output).toContain("export type UsersUpdate = Partial<UsersCreate>")
+    expect(output).toContain("export type CategoriesUpdate = Partial<CategoriesCreate>")
+  })
+
   test("snapshot", () => {
     const output = generate(ir)
     expect(output).toMatchSnapshot()

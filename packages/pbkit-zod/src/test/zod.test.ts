@@ -46,6 +46,18 @@ describe("generateZod", () => {
     expect(output).toContain("export const ArticlesUpdateSchema = ArticlesCreateSchema.partial()");
   });
 
+  test("adds +/- modifier keys for multiple relation fields in update schema", () => {
+    expect(output).toContain("export const ArticlesUpdateSchema = ArticlesCreateSchema.partial().extend({");
+    expect(output).toContain('"+categories": z.union([z.string(), z.array(z.string())]).optional()');
+    expect(output).toContain('"categories+": z.union([z.string(), z.array(z.string())]).optional()');
+    expect(output).toContain('"categories-": z.union([z.string(), z.array(z.string())]).optional()');
+  });
+
+  test("keeps plain partial update schema for collections without multi relation/file fields", () => {
+    expect(output).toContain("export const UsersUpdateSchema = UsersCreateSchema.partial()");
+    expect(output).toContain("export const CategoriesUpdateSchema = CategoriesCreateSchema.partial()");
+  });
+
   test("text fields use min/max/pattern constraints", () => {
     expect(output).toContain("title: z.string().min(1).max(200)");
     expect(output).toContain("name: z.string().min(1).max(100)");

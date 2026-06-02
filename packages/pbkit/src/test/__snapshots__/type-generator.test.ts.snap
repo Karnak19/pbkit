@@ -81,7 +81,11 @@ export type ArticlesCreate = {
   source?: string
 }
 
-export type ArticlesUpdate = Partial<ArticlesCreate>
+export type ArticlesUpdate = Partial<ArticlesCreate> & {
+  "+categories"?: string | string[]
+  "categories+"?: string | string[]
+  "categories-"?: string | string[]
+}
 
 export type ArticlesExpand = "author" | "categories"
 

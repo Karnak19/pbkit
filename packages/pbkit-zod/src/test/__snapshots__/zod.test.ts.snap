@@ -85,7 +85,11 @@ export const ArticlesCreateSchema = z.object({
   source: z.string().url().optional(),
 })
 
-export const ArticlesUpdateSchema = ArticlesCreateSchema.partial()
+export const ArticlesUpdateSchema = ArticlesCreateSchema.partial().extend({
+  "+categories": z.union([z.string(), z.array(z.string())]).optional(),
+  "categories+": z.union([z.string(), z.array(z.string())]).optional(),
+  "categories-": z.union([z.string(), z.array(z.string())]).optional(),
+})
 
 // --- Comments ---
 

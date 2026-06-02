@@ -84,7 +84,7 @@ collections: {
 }
 ```
 
-The configured type is applied to the `Record`, `Create`, and `Update` types. When using `from`, `type` must be the bare exported name (define a type alias in your module if you need something like `TechSpec[]`).
+The configured type is applied to the `Record`, `Create`, and `Update` types. When using `from`, `type` must be the bare exported name (define a type alias in your module if you need something like `TechSpec[]`), and the same type name must not be imported from two different modules. `fields` only applies to `json` fields — entries pointing at any other field are reported and ignored.
 
 When you run `pbkit generate`, any `json` field left untyped is reported so you know what's still `unknown`:
 

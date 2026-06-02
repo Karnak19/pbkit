@@ -59,6 +59,7 @@ export type ArticlesRecord = BaseRecord & {
   author: string
   categories?: string[]
   cover?: string
+  attachments?: string[]
   views?: number
   featured?: boolean
   metadata?: unknown
@@ -74,6 +75,7 @@ export type ArticlesCreate = {
   author: string
   categories?: string[]
   cover?: string
+  attachments?: string[]
   views?: number
   featured?: boolean
   metadata?: unknown
@@ -85,6 +87,9 @@ export type ArticlesUpdate = Partial<ArticlesCreate> & {
   "+categories"?: string | string[]
   "categories+"?: string | string[]
   "categories-"?: string | string[]
+  "+attachments"?: File | File[]
+  "attachments+"?: File | File[]
+  "attachments-"?: string | string[]
 }
 
 export type ArticlesExpand = "author" | "categories"

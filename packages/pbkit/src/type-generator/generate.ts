@@ -108,8 +108,11 @@ function updateType(collection: CollectionSchema): string {
 
   const mods: string[] = []
   for (const f of modFields) {
-    mods.push(`  ${JSON.stringify("+" + f.name)}?: string | string[]`)
-    mods.push(`  ${JSON.stringify(f.name + "+")}?: string | string[]`)
+    // file append/prepend take uploads (File), removal takes filenames (string);
+    // relation modifiers are all record-id strings.
+    const append = f.type === "file" ? "File | File[]" : "string | string[]"
+    mods.push(`  ${JSON.stringify("+" + f.name)}?: ${append}`)
+    mods.push(`  ${JSON.stringify(f.name + "+")}?: ${append}`)
     mods.push(`  ${JSON.stringify(f.name + "-")}?: string | string[]`)
   }
   return `export type ${name}Update = Partial<${name}Create> & {\n${mods.join("\n")}\n}`

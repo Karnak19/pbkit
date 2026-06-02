@@ -191,6 +191,14 @@ describe("generate", () => {
     expect(articlesUpdate).toContain('"categories-"?: string | string[]')
   })
 
+  test("multiple file modifiers: append/prepend take File, removal takes filename", () => {
+    const output = generate(ir)
+    const articlesUpdate = output.match(/export type ArticlesUpdate = [^\n]+(?:\n {2}[^\n]+)*\n}/)?.[0] ?? ""
+    expect(articlesUpdate).toContain('"+attachments"?: File | File[]')
+    expect(articlesUpdate).toContain('"attachments+"?: File | File[]')
+    expect(articlesUpdate).toContain('"attachments-"?: string | string[]')
+  })
+
   test("keeps plain Partial Update for collections without multi relation/file fields", () => {
     const output = generate(ir)
     expect(output).toContain("export type UsersUpdate = Partial<UsersCreate>")

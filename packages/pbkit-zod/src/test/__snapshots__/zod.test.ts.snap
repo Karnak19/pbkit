@@ -63,6 +63,7 @@ export const ArticlesRecordSchema = BaseRecordSchema.extend({
   author: z.string(),
   categories: z.array(z.string()).optional(),
   cover: z.string().optional(),
+  attachments: z.array(z.string()).optional(),
   views: z.number().min(0).int().optional(),
   featured: z.boolean().optional(),
   metadata: z.unknown().optional(),
@@ -78,6 +79,7 @@ export const ArticlesCreateSchema = z.object({
   author: z.string(),
   categories: z.array(z.string()).optional(),
   cover: z.string().optional(),
+  attachments: z.array(z.string()).optional(),
   views: z.number().min(0).int().optional(),
   featured: z.boolean().optional(),
   metadata: z.unknown().optional(),
@@ -89,6 +91,9 @@ export const ArticlesUpdateSchema = ArticlesCreateSchema.partial().extend({
   "+categories": z.union([z.string(), z.array(z.string())]).optional(),
   "categories+": z.union([z.string(), z.array(z.string())]).optional(),
   "categories-": z.union([z.string(), z.array(z.string())]).optional(),
+  "+attachments": z.union([z.instanceof(File), z.array(z.instanceof(File))]).optional(),
+  "attachments+": z.union([z.instanceof(File), z.array(z.instanceof(File))]).optional(),
+  "attachments-": z.union([z.string(), z.array(z.string())]).optional(),
 })
 
 // --- Comments ---

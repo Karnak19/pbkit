@@ -223,6 +223,15 @@
         "mimeTypes": ["image/jpeg", "image/png", "image/webp"]
       },
       {
+        "id": "file_art_attachments",
+        "name": "attachments",
+        "type": "file",
+        "system": false,
+        "required": false,
+        "maxSelect": 5,
+        "maxSize": 10485760
+      },
+      {
         "id": "number_art_views",
         "name": "views",
         "type": "number",

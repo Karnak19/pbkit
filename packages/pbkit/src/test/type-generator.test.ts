@@ -110,7 +110,7 @@ describe("generate", () => {
     expect(output).toContain("export type UsersUpdate = Partial<UsersCreate>")
     expect(output).toContain("export type ArticlesRecord = BaseRecord & {")
     expect(output).toContain("export type ArticlesCreate = {")
-    expect(output).toContain("export type ArticlesUpdate = Partial<ArticlesCreate>")
+    expect(output).toContain("export type ArticlesUpdate = Partial<ArticlesCreate> & {")
   })
 
   test("skips password in Record, includes in Create for auth", () => {
@@ -180,6 +180,29 @@ describe("generate", () => {
     )
     expect(articles).toContain("title?:")
     expect(articles).toContain("status?:")
+  })
+
+  test("adds +/- modifier keys for multiple relation fields in Update", () => {
+    const output = generate(ir)
+    const articlesUpdate = output.match(/export type ArticlesUpdate = [^\n]+(?:\n {2}[^\n]+)*\n}/)?.[0] ?? ""
+    expect(articlesUpdate).toContain("Partial<ArticlesCreate> & {")
+    expect(articlesUpdate).toContain('"+categories"?: string | string[]')
+    expect(articlesUpdate).toContain('"categories+"?: string | string[]')
+    expect(articlesUpdate).toContain('"categories-"?: string | string[]')
+  })
+
+  test("multiple file modifiers: append/prepend take File, removal takes filename", () => {
+    const output = generate(ir)
+    const articlesUpdate = output.match(/export type ArticlesUpdate = [^\n]+(?:\n {2}[^\n]+)*\n}/)?.[0] ?? ""
+    expect(articlesUpdate).toContain('"+attachments"?: File | File[]')
+    expect(articlesUpdate).toContain('"attachments+"?: File | File[]')
+    expect(articlesUpdate).toContain('"attachments-"?: string | string[]')
+  })
+
+  test("keeps plain Partial Update for collections without multi relation/file fields", () => {
+    const output = generate(ir)
+    expect(output).toContain("export type UsersUpdate = Partial<UsersCreate>")
+    expect(output).toContain("export type CategoriesUpdate = Partial<CategoriesCreate>")
   })
 
   test("snapshot", () => {

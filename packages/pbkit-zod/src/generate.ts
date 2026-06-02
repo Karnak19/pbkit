@@ -129,9 +129,35 @@ function createSchema(col: CollectionSchema): string[] {
   return lines;
 }
 
+// Multiple relation/file fields support PocketBase's +/- update modifiers to
+// append, prepend, or remove individual values without replacing the array.
+function isModifierField(field: CollectionField): boolean {
+  if (field.type !== "relation" && field.type !== "file") return false;
+  return isMultipleField(field) && isCreateField(field);
+}
+
 function updateSchema(col: CollectionSchema): string[] {
   const name = pascalCase(col.name);
-  return [`export const ${name}UpdateSchema = ${name}CreateSchema.partial()`];
+  const modFields = col.fields.filter(isModifierField);
+  if (modFields.length === 0) {
+    return [`export const ${name}UpdateSchema = ${name}CreateSchema.partial()`];
+  }
+
+  const stringMod = "z.union([z.string(), z.array(z.string())])";
+  const fileMod = "z.union([z.instanceof(File), z.array(z.instanceof(File))])";
+
+  const lines: string[] = [];
+  lines.push(`export const ${name}UpdateSchema = ${name}CreateSchema.partial().extend({`);
+  for (const f of modFields) {
+    // file append/prepend take uploads (File), removal takes filenames (string);
+    // relation modifiers are all record-id strings.
+    const append = f.type === "file" ? fileMod : stringMod;
+    lines.push(`  ${JSON.stringify("+" + f.name)}: ${append}.optional(),`);
+    lines.push(`  ${JSON.stringify(f.name + "+")}: ${append}.optional(),`);
+    lines.push(`  ${JSON.stringify(f.name + "-")}: ${stringMod}.optional(),`);
+  }
+  lines.push("})");
+  return lines;
 }
 
 export function generateZod(ir: SchemaIR, ctx: PluginContext): string {

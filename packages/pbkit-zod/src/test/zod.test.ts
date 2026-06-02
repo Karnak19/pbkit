@@ -43,7 +43,25 @@ describe("generateZod", () => {
 
   test("generates update schemas as partial of create", () => {
     expect(output).toContain("export const UsersUpdateSchema = UsersCreateSchema.partial()");
-    expect(output).toContain("export const ArticlesUpdateSchema = ArticlesCreateSchema.partial()");
+    expect(output).toContain("export const ArticlesUpdateSchema = ArticlesCreateSchema.partial().extend({");
+  });
+
+  test("adds +/- modifier keys for multiple relation fields in update schema", () => {
+    expect(output).toContain("export const ArticlesUpdateSchema = ArticlesCreateSchema.partial().extend({");
+    expect(output).toContain('"+categories": z.union([z.string(), z.array(z.string())]).optional()');
+    expect(output).toContain('"categories+": z.union([z.string(), z.array(z.string())]).optional()');
+    expect(output).toContain('"categories-": z.union([z.string(), z.array(z.string())]).optional()');
+  });
+
+  test("multiple file modifiers: append/prepend take File, removal takes filename", () => {
+    expect(output).toContain('"+attachments": z.union([z.instanceof(File), z.array(z.instanceof(File))]).optional()');
+    expect(output).toContain('"attachments+": z.union([z.instanceof(File), z.array(z.instanceof(File))]).optional()');
+    expect(output).toContain('"attachments-": z.union([z.string(), z.array(z.string())]).optional()');
+  });
+
+  test("keeps plain partial update schema for collections without multi relation/file fields", () => {
+    expect(output).toContain("export const UsersUpdateSchema = UsersCreateSchema.partial()");
+    expect(output).toContain("export const CategoriesUpdateSchema = CategoriesCreateSchema.partial()");
   });
 
   test("text fields use min/max/pattern constraints", () => {

@@ -94,6 +94,30 @@ function createType(collection: CollectionSchema, options: GenerateOptions): str
   return `export type ${name}Create = {\n${fields.join("\n")}\n}`
 }
 
+// Multiple relation/file fields support PocketBase's +/- update modifiers to
+// append, prepend, or remove individual values without replacing the array.
+function isModifierField(field: CollectionField): boolean {
+  if (field.type !== "relation" && field.type !== "file") return false
+  return isMultipleField(field) && isCreateField(field)
+}
+
+function updateType(collection: CollectionSchema): string {
+  const name = pascalCase(collection.name)
+  const modFields = collection.fields.filter(isModifierField)
+  if (modFields.length === 0) return `export type ${name}Update = Partial<${name}Create>`
+
+  const mods: string[] = []
+  for (const f of modFields) {
+    // file append/prepend take uploads (File), removal takes filenames (string);
+    // relation modifiers are all record-id strings.
+    const append = f.type === "file" ? "File | File[]" : "string | string[]"
+    mods.push(`  ${JSON.stringify("+" + f.name)}?: ${append}`)
+    mods.push(`  ${JSON.stringify(f.name + "+")}?: ${append}`)
+    mods.push(`  ${JSON.stringify(f.name + "-")}?: string | string[]`)
+  }
+  return `export type ${name}Update = Partial<${name}Create> & {\n${mods.join("\n")}\n}`
+}
+
 function getExpandPaths(
   ir: SchemaIR,
   collectionName: string,
@@ -232,7 +256,7 @@ export function generate(ir: SchemaIR, options: GenerateOptions & { collections?
     parts.push("")
     parts.push(createType(col, opts))
     parts.push("")
-    parts.push(`export type ${name}Update = Partial<${name}Create>`)
+    parts.push(updateType(col))
     parts.push("")
     const exp = expandType(col, ir, expandDepth, isExcluded)
     if (exp) {

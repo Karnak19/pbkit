@@ -5,7 +5,23 @@ import { parseJsonFile } from "./schema-parser/parse-json";
 import { generate } from "./type-generator/generate";
 import { generateSdk, generateClientFile } from "./sdk-generator/generate";
 import type { PbkitConfig, InputConfig } from "./config/types";
+import { isCollectionExcluded, getFieldConfig } from "./config";
 import type { SchemaIR } from "./schema-parser";
+
+// json fields generated as `unknown` because no explicit type is configured.
+function findUntypedJsonFields(ir: SchemaIR, config: PbkitConfig): string[] {
+  const untyped: string[] = [];
+  for (const col of ir.collections) {
+    if (isCollectionExcluded(col.name, config.collections)) continue;
+    for (const field of col.fields) {
+      if (field.type !== "json") continue;
+      if (!getFieldConfig(col.name, field.name, config.collections)) {
+        untyped.push(`${col.name}.${field.name}`);
+      }
+    }
+  }
+  return untyped;
+}
 
 function resolveInput(input: string | InputConfig): {
   type: "api" | "file";
@@ -35,6 +51,7 @@ async function loadSchema(input: string | InputConfig): Promise<SchemaIR> {
 export interface GenerateResult {
   files: { path: string; content: string }[];
   durationMs: number;
+  warnings: string[];
 }
 
 export async function generateProject(config: PbkitConfig): Promise<GenerateResult> {
@@ -87,6 +104,15 @@ export async function generateProject(config: PbkitConfig): Promise<GenerateResu
     writeFileSync(file.path, file.content);
   }
 
+  const warnings: string[] = [];
+  const untypedJson = findUntypedJsonFields(ir, config);
+  if (untypedJson.length > 0) {
+    warnings.push(
+      `${untypedJson.length} json field(s) generated as 'unknown': ${untypedJson.join(", ")}.\n` +
+        `  Add a type via collections.<collection>.fields.<field> = { type, from? } in your config.`,
+    );
+  }
+
   const durationMs = performance.now() - start;
-  return { files, durationMs };
+  return { files, durationMs, warnings };
 }

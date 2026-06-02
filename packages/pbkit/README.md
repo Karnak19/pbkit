@@ -131,6 +131,10 @@ export default {
         delete: false,
       },
     },
+    // Type json fields (otherwise generated as `unknown`)
+    listings: {
+      fields: { tech_spec: { type: "TechSpec", from: "$/lib/specs" } },
+    },
   },
 
   plugins: [],

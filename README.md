@@ -114,6 +114,7 @@ export default {
     _superusers: { exclude: true },                    // Skip entirely
     logs: { exclude: true },
     articles: { operations: { create: false, delete: false } },  // Disable specific CRUD ops
+    listings: { fields: { tech_spec: { type: "TechSpec", from: "$/lib/specs" } } }, // Type a json field
   },
 
   // Plugins

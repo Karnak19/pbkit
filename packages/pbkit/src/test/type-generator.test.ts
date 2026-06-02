@@ -205,6 +205,29 @@ describe("generate", () => {
     expect(output).toContain("export type CategoriesUpdate = Partial<CategoriesCreate>")
   })
 
+  test("maps configured json field to its type with an import", () => {
+    const output = generate(ir, {
+      collections: { articles: { fields: { metadata: { type: "ArticleMeta", from: "$/types" } } } },
+    })
+    expect(output).toContain('import type { ArticleMeta } from "$/types"')
+    expect(output).toContain("metadata?: ArticleMeta")
+    expect(output).not.toContain("metadata?: unknown")
+  })
+
+  test("maps configured json field to an inline type without an import", () => {
+    const output = generate(ir, {
+      collections: { articles: { fields: { metadata: { type: "number" } } } },
+    })
+    expect(output).toContain("metadata?: number")
+    expect(output).not.toContain("import type")
+  })
+
+  test("leaves unconfigured json fields as unknown", () => {
+    const output = generate(ir)
+    expect(output).toContain("metadata?: unknown")
+    expect(output).not.toContain("import type")
+  })
+
   test("snapshot", () => {
     const output = generate(ir)
     expect(output).toMatchSnapshot()

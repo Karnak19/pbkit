@@ -131,4 +131,30 @@ describe("generateProject", () => {
     const result = await generateProject({ input: fixturePath, output: outDir })
     expect(result.durationMs).toBeGreaterThan(0)
   })
+
+  test("warns about untyped json fields", async () => {
+    const outDir = resolve(TMP, "generated-warn")
+    const result = await generateProject({ input: fixturePath, output: outDir })
+    expect(result.warnings.some(w => w.includes("articles.metadata"))).toBe(true)
+  })
+
+  test("no json warning once the field is typed", async () => {
+    const outDir = resolve(TMP, "generated-nowarn")
+    const result = await generateProject({
+      input: fixturePath,
+      output: outDir,
+      collections: { articles: { fields: { metadata: { type: "Record<string, unknown>" } } } },
+    })
+    expect(result.warnings.some(w => w.includes("metadata"))).toBe(false)
+  })
+
+  test("does not warn about json in excluded collections", async () => {
+    const outDir = resolve(TMP, "generated-warn-excl")
+    const result = await generateProject({
+      input: fixturePath,
+      output: outDir,
+      collections: { articles: { exclude: true } },
+    })
+    expect(result.warnings.some(w => w.includes("articles.metadata"))).toBe(false)
+  })
 })

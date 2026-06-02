@@ -5,7 +5,71 @@ import { parseJsonFile } from "./schema-parser/parse-json";
 import { generate } from "./type-generator/generate";
 import { generateSdk, generateClientFile } from "./sdk-generator/generate";
 import type { PbkitConfig, InputConfig } from "./config/types";
+import { isCollectionExcluded, getFieldConfig } from "./config";
 import type { SchemaIR } from "./schema-parser";
+
+// Surfaces json fields left as `unknown`, `fields` config that targets a
+// non-json/non-existent field (silently ignored by the generator), and json
+// type names imported from more than one module (which would emit colliding
+// `import type` lines).
+function collectFieldConfigWarnings(ir: SchemaIR, config: PbkitConfig): string[] {
+  const warnings: string[] = [];
+  const untyped: string[] = [];
+  const misconfigured: string[] = [];
+  const importModules = new Map<string, Set<string>>(); // type name -> modules
+
+  for (const col of ir.collections) {
+    if (isCollectionExcluded(col.name, config.collections)) continue;
+    const fieldsByName = new Map(col.fields.map(f => [f.name, f]));
+
+    for (const field of col.fields) {
+      if (field.type !== "json") continue;
+      if (!getFieldConfig(col.name, field.name, config.collections)) {
+        untyped.push(`${col.name}.${field.name}`);
+      }
+    }
+
+    const fieldsCfg = config.collections?.[col.name]?.fields;
+    if (!fieldsCfg) continue;
+    for (const [fieldName, fc] of Object.entries(fieldsCfg)) {
+      const target = fieldsByName.get(fieldName);
+      if (!target) {
+        misconfigured.push(`${col.name}.${fieldName} (no such field)`);
+        continue;
+      }
+      if (target.type !== "json") {
+        misconfigured.push(`${col.name}.${fieldName} (type '${target.type}', not json)`);
+        continue;
+      }
+      if (fc.from) {
+        if (!importModules.has(fc.type)) importModules.set(fc.type, new Set());
+        importModules.get(fc.type)!.add(fc.from);
+      }
+    }
+  }
+
+  if (untyped.length > 0) {
+    warnings.push(
+      `${untyped.length} json field(s) generated as 'unknown': ${untyped.join(", ")}.\n` +
+        `  Add a type via collections.<collection>.fields.<field> = { type, from? } in your config.`,
+    );
+  }
+  if (misconfigured.length > 0) {
+    warnings.push(
+      `fields config ignored for non-json field(s): ${misconfigured.join(", ")}.\n` +
+        `  The 'fields' option only types json fields.`,
+    );
+  }
+  for (const [type, modules] of importModules) {
+    if (modules.size > 1) {
+      warnings.push(
+        `json type "${type}" is imported from multiple modules (${[...modules].join(", ")}); ` +
+          `the generated 'import type' lines will collide. Use distinct type names.`,
+      );
+    }
+  }
+  return warnings;
+}
 
 function resolveInput(input: string | InputConfig): {
   type: "api" | "file";
@@ -35,6 +99,7 @@ async function loadSchema(input: string | InputConfig): Promise<SchemaIR> {
 export interface GenerateResult {
   files: { path: string; content: string }[];
   durationMs: number;
+  warnings: string[];
 }
 
 export async function generateProject(config: PbkitConfig): Promise<GenerateResult> {
@@ -87,6 +152,8 @@ export async function generateProject(config: PbkitConfig): Promise<GenerateResu
     writeFileSync(file.path, file.content);
   }
 
+  const warnings = collectFieldConfigWarnings(ir, config);
+
   const durationMs = performance.now() - start;
-  return { files, durationMs };
+  return { files, durationMs, warnings };
 }

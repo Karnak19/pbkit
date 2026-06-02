@@ -29,8 +29,8 @@ export type { SdkGenerateOptions } from "./sdk-generator";
 
 export type { PbkitPlugin, PluginContext, PluginOutputFile } from "./plugin";
 
-export { isCollectionExcluded, isOperationEnabled, enabledOperations } from "./config";
-export type { OperationName, CollectionConfig, CollectionsConfig } from "./config";
+export { isCollectionExcluded, isOperationEnabled, enabledOperations, getFieldConfig } from "./config";
+export type { OperationName, CollectionConfig, CollectionsConfig, FieldConfig } from "./config";
 
 export { pascalCase } from "./utils";
 

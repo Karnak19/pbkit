@@ -113,6 +113,15 @@ collections: {
 }
 ```
 
+Use `fields` to type a `json` field (otherwise generated as `unknown`); `from` adds an `import type` to `types.gen.ts`. `pbkit generate` warns about json fields left untyped.
+
+```ts
+collections: {
+  listings: { fields: { tech_spec: { type: "TechSpec", from: "$/lib/specs" } } },
+  organizations_with_stats: { fields: { members_count: { type: "number" } } },
+}
+```
+
 Plugins respect the same collection exclusions and disabled operations.
 
 ## CLI

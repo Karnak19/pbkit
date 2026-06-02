@@ -223,6 +223,25 @@ article.expand?.author // typed as UsersRecord — read it directly
 Multi-relations come back as arrays and nested paths nest the `expand` object.
 See [Expand types](/reference/expand-types) for the full details.
 
+## Typing json fields
+
+pocketbase-typegen lets you type a json field through a trailing generic
+parameter (e.g. `ListingsResponse<..., TechSpec>`). pbkit generates json fields
+as `unknown` by default, and you map them to a concrete type in your config
+instead of at every call site:
+
+```ts
+// pbkit.config.ts
+collections: {
+  listings: {
+    fields: { tech_spec: { type: "TechSpec", from: "$/lib/listing-specs" } },
+  },
+}
+```
+
+`listings.tech_spec` is then typed as `TechSpec` everywhere. See
+[Configure collections → Type json fields](/how-to/configure-collections#type-json-fields).
+
 ## Authentication
 
 Auth-collection methods move from `pb.collection(...)` to dedicated functions:

@@ -48,6 +48,9 @@ async function runGenerate(config: PbkitConfig) {
     console.log(`  ${rel}`)
   }
   console.log(`Generated ${result.files.length} file(s) in ${Math.round(result.durationMs)}ms`)
+  for (const warning of result.warnings) {
+    console.warn(`⚠ ${warning}`)
+  }
 }
 
 async function runWatch(config: PbkitConfig) {

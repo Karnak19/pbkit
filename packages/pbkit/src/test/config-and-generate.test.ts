@@ -131,4 +131,71 @@ describe("generateProject", () => {
     const result = await generateProject({ input: fixturePath, output: outDir })
     expect(result.durationMs).toBeGreaterThan(0)
   })
+
+  test("warns about untyped json fields", async () => {
+    const outDir = resolve(TMP, "generated-warn")
+    const result = await generateProject({ input: fixturePath, output: outDir })
+    expect(result.warnings.some(w => w.includes("articles.metadata"))).toBe(true)
+  })
+
+  test("no json warning once the field is typed", async () => {
+    const outDir = resolve(TMP, "generated-nowarn")
+    const result = await generateProject({
+      input: fixturePath,
+      output: outDir,
+      collections: { articles: { fields: { metadata: { type: "Record<string, unknown>" } } } },
+    })
+    expect(result.warnings.some(w => w.includes("metadata"))).toBe(false)
+  })
+
+  test("does not warn about json in excluded collections", async () => {
+    const outDir = resolve(TMP, "generated-warn-excl")
+    const result = await generateProject({
+      input: fixturePath,
+      output: outDir,
+      collections: { articles: { exclude: true } },
+    })
+    expect(result.warnings.some(w => w.includes("articles.metadata"))).toBe(false)
+  })
+
+  test("warns when fields config targets a non-json or missing field", async () => {
+    const outDir = resolve(TMP, "generated-misconfig")
+    const result = await generateProject({
+      input: fixturePath,
+      output: outDir,
+      collections: {
+        articles: {
+          fields: {
+            title: { type: "Foo" },      // title is a text field
+            nope: { type: "Bar" },        // no such field
+            metadata: { type: "Meta" },   // valid json field — must not warn
+          },
+        },
+      },
+    })
+    const misconfig = result.warnings.find(w => w.includes("non-json field"))
+    expect(misconfig).toBeDefined()
+    expect(misconfig).toContain("articles.title")
+    expect(misconfig).toContain("articles.nope")
+    expect(misconfig).not.toContain("articles.metadata")
+  })
+
+  test("warns when the same json type is imported from multiple modules", async () => {
+    const schemaPath = resolve(TMP, "two-json.json")
+    const jsonField = (id: string) => ({ id, name: "data", type: "json", required: false, system: false })
+    writeFileSync(schemaPath, JSON.stringify([
+      { id: "c1", name: "alpha", type: "base", fields: [jsonField("f1")] },
+      { id: "c2", name: "beta", type: "base", fields: [jsonField("f2")] },
+    ]))
+    const outDir = resolve(TMP, "generated-collision")
+    const result = await generateProject({
+      input: schemaPath,
+      output: outDir,
+      collections: {
+        alpha: { fields: { data: { type: "Shared", from: "$/a" } } },
+        beta: { fields: { data: { type: "Shared", from: "$/b" } } },
+      },
+    })
+    expect(result.warnings.some(w => w.includes('"Shared"') && w.includes("collide"))).toBe(true)
+  })
 })

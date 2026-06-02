@@ -1,5 +1,18 @@
 # @karnak19/pbkit-zod
 
+## 1.0.0
+
+### Minor Changes
+
+- 7232f94: Add PocketBase `+`/`-` update modifier keys to generated `Update` types for multiple relation and file fields. You can now type-safely append, prepend, or remove individual values, e.g. `sdk.updateArticle(id, { "categories+": [id1, id2] })`. The pbkit-zod plugin's `UpdateSchema` gains the matching optional keys.
+
+### Patch Changes
+
+- 33a3074: Fix uninstallable plugins by moving `@karnak19/pbkit` from `dependencies` (`workspace:*`) to `peerDependencies` (`^0.4.0`). The unresolved `workspace:*` protocol was being published verbatim, so the plugins couldn't be installed outside the monorepo. The core package is now declared as a peer dependency — consumers already install it as the host CLI — which also guarantees the plugin shares the host's single pbkit instance.
+- Updated dependencies [b479958]
+- Updated dependencies [7232f94]
+  - @karnak19/pbkit@0.5.0
+
 ## 0.0.4
 
 ### Patch Changes

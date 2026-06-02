@@ -1,5 +1,12 @@
 # @karnak19/pbkit
 
+## 0.5.0
+
+### Minor Changes
+
+- b479958: Allow typing `json` fields instead of always emitting `unknown`. Map a field to an explicit type in your config via `collections.<collection>.fields.<field> = { type, from? }`; `from` emits an `import type` at the top of `types.gen.ts`. The type applies to the `Record`, `Create`, and `Update` types. Unconfigured json fields keep their `unknown` type (non-breaking), and `pbkit generate` now warns which json fields are still untyped.
+- 7232f94: Add PocketBase `+`/`-` update modifier keys to generated `Update` types for multiple relation and file fields. You can now type-safely append, prepend, or remove individual values, e.g. `sdk.updateArticle(id, { "categories+": [id1, id2] })`. The pbkit-zod plugin's `UpdateSchema` gains the matching optional keys.
+
 ## 0.4.0
 
 ### Minor Changes

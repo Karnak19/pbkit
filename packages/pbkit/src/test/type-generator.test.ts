@@ -110,7 +110,7 @@ describe("generate", () => {
     expect(output).toContain("export type UsersUpdate = Partial<UsersCreate>")
     expect(output).toContain("export type ArticlesRecord = BaseRecord & {")
     expect(output).toContain("export type ArticlesCreate = {")
-    expect(output).toContain("export type ArticlesUpdate = Partial<ArticlesCreate>")
+    expect(output).toContain("export type ArticlesUpdate = Partial<ArticlesCreate> & {")
   })
 
   test("skips password in Record, includes in Create for auth", () => {

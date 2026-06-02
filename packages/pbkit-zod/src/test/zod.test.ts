@@ -43,7 +43,7 @@ describe("generateZod", () => {
 
   test("generates update schemas as partial of create", () => {
     expect(output).toContain("export const UsersUpdateSchema = UsersCreateSchema.partial()");
-    expect(output).toContain("export const ArticlesUpdateSchema = ArticlesCreateSchema.partial()");
+    expect(output).toContain("export const ArticlesUpdateSchema = ArticlesCreateSchema.partial().extend({");
   });
 
   test("adds +/- modifier keys for multiple relation fields in update schema", () => {

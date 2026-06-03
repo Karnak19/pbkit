@@ -44,6 +44,7 @@ export type UsersRecord = AuthRecord & {
 
 export type UsersCreate = {
   password: string
+  passwordConfirm: string
   email: string
   emailVisibility?: boolean
   verified?: boolean
@@ -51,7 +52,9 @@ export type UsersCreate = {
   avatar?: string
 }
 
-export type UsersUpdate = Partial<UsersCreate>
+export type UsersUpdate = Partial<UsersCreate> & {
+  oldPassword?: string
+}
 
 // Categories
 

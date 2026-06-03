@@ -113,6 +113,36 @@ describe("generate", () => {
     expect(output).toContain("export type ArticlesUpdate = Partial<ArticlesCreate> & {")
   })
 
+  // Regression (#53): PocketBase auth API requires passwordConfirm on create and
+  // accepts oldPassword on a self-service password-change update.
+  test("auth Create includes a required passwordConfirm next to password", () => {
+    const output = generate(ir)
+    const usersCreate = output.slice(
+      output.indexOf("export type UsersCreate"),
+      output.indexOf("export type UsersUpdate"),
+    )
+    expect(usersCreate).toContain("password: string")
+    expect(usersCreate).toContain("passwordConfirm: string")
+    expect(usersCreate).not.toContain("passwordConfirm?:")
+  })
+
+  test("auth Update adds oldPassword (passwordConfirm comes via Partial<Create>)", () => {
+    const output = generate(ir)
+    const usersUpdate = output.match(/export type UsersUpdate = [^\n]+(?:\n {2}[^\n]+)*\n}/)?.[0] ?? ""
+    expect(usersUpdate).toContain("Partial<UsersCreate> & {")
+    expect(usersUpdate).toContain("oldPassword?: string")
+  })
+
+  test("non-auth collections get no passwordConfirm/oldPassword", () => {
+    const output = generate(ir)
+    const articles = output.slice(
+      output.indexOf("// Articles"),
+      output.indexOf("// Comments"),
+    )
+    expect(articles).not.toContain("passwordConfirm")
+    expect(articles).not.toContain("oldPassword")
+  })
+
   test("skips password in Record, includes in Create for auth", () => {
     const output = generate(ir)
     const usersRecord = output.slice(
@@ -212,9 +242,8 @@ describe("generate", () => {
     expect(articlesUpdate).toContain('"attachments-"?: string | string[]')
   })
 
-  test("keeps plain Partial Update for collections without multi relation/file fields", () => {
+  test("keeps plain Partial Update for non-auth collections without multi relation/file fields", () => {
     const output = generate(ir)
-    expect(output).toContain("export type UsersUpdate = Partial<UsersCreate>")
     expect(output).toContain("export type CategoriesUpdate = Partial<CategoriesCreate>")
   })
 

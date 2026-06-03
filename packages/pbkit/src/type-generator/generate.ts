@@ -93,9 +93,14 @@ function recordType(collection: CollectionSchema, options: InternalOptions): str
 
 function createType(collection: CollectionSchema, options: InternalOptions): string {
   const name = pascalCase(collection.name)
-  const fields = collection.fields
-    .filter(f => isCreateField(f))
-    .map(f => "  " + fieldDecl(f, options, collection.name))
+  const isAuth = collection.type === "auth"
+  const fields: string[] = []
+  for (const f of collection.fields) {
+    if (!isCreateField(f)) continue
+    fields.push("  " + fieldDecl(f, options, collection.name))
+    // PocketBase requires passwordConfirm alongside password on auth create.
+    if (isAuth && f.type === "password") fields.push("  passwordConfirm: string")
+  }
 
   if (fields.length === 0) return `export type ${name}Create = Record<string, unknown>`
   return `export type ${name}Create = {\n${fields.join("\n")}\n}`
@@ -110,19 +115,23 @@ function isModifierField(field: CollectionField): boolean {
 
 function updateType(collection: CollectionSchema): string {
   const name = pascalCase(collection.name)
-  const modFields = collection.fields.filter(isModifierField)
-  if (modFields.length === 0) return `export type ${name}Update = Partial<${name}Create>`
+  const extra: string[] = []
 
-  const mods: string[] = []
-  for (const f of modFields) {
+  // A user changing their own auth password must also supply oldPassword;
+  // passwordConfirm is already covered as optional by Partial<Create>.
+  if (collection.type === "auth") extra.push("  oldPassword?: string")
+
+  for (const f of collection.fields.filter(isModifierField)) {
     // file append/prepend take uploads (File), removal takes filenames (string);
     // relation modifiers are all record-id strings.
     const append = f.type === "file" ? "File | File[]" : "string | string[]"
-    mods.push(`  ${JSON.stringify("+" + f.name)}?: ${append}`)
-    mods.push(`  ${JSON.stringify(f.name + "+")}?: ${append}`)
-    mods.push(`  ${JSON.stringify(f.name + "-")}?: string | string[]`)
+    extra.push(`  ${JSON.stringify("+" + f.name)}?: ${append}`)
+    extra.push(`  ${JSON.stringify(f.name + "+")}?: ${append}`)
+    extra.push(`  ${JSON.stringify(f.name + "-")}?: string | string[]`)
   }
-  return `export type ${name}Update = Partial<${name}Create> & {\n${mods.join("\n")}\n}`
+
+  if (extra.length === 0) return `export type ${name}Update = Partial<${name}Create>`
+  return `export type ${name}Update = Partial<${name}Create> & {\n${extra.join("\n")}\n}`
 }
 
 function getExpandPaths(

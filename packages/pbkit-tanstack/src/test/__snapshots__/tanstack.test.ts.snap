@@ -9,12 +9,12 @@ import { getUser, getFirstUser, listUsers, getFullListUsers, createUser, updateU
 
 // --- Users ---
 
-export function userQueryKey(id: string) {
-  return ["users", id] as const
+export function userQueryKey(id: string, options?: RequestOptions) {
+  return ["users", id, options] as const
 }
 
-export function getFirstUserQueryKey(filter: string) {
-  return ["users", "first", filter] as const
+export function getFirstUserQueryKey(filter: string, options?: RequestOptions) {
+  return ["users", "first", filter, options] as const
 }
 
 export function usersQueryKey(params?: ListParams) {
@@ -72,12 +72,12 @@ export function deleteUserMutationOptions(opts?: { client?: PbClient; fetch?: ty
 
 // --- Categories ---
 
-export function categoryQueryKey(id: string) {
-  return ["categories", id] as const
+export function categoryQueryKey(id: string, options?: RequestOptions) {
+  return ["categories", id, options] as const
 }
 
-export function getFirstCategoryQueryKey(filter: string) {
-  return ["categories", "first", filter] as const
+export function getFirstCategoryQueryKey(filter: string, options?: RequestOptions) {
+  return ["categories", "first", filter, options] as const
 }
 
 export function categoriesQueryKey(params?: ListParams) {
@@ -135,12 +135,12 @@ export function deleteCategoryMutationOptions(opts?: { client?: PbClient; fetch?
 
 // --- Articles ---
 
-export function articleQueryKey(id: string) {
-  return ["articles", id] as const
+export function articleQueryKey(id: string, options?: RequestOptions) {
+  return ["articles", id, options] as const
 }
 
-export function getFirstArticleQueryKey(filter: string) {
-  return ["articles", "first", filter] as const
+export function getFirstArticleQueryKey(filter: string, options?: RequestOptions) {
+  return ["articles", "first", filter, options] as const
 }
 
 export function articlesQueryKey(params?: ListParams) {
@@ -198,12 +198,12 @@ export function deleteArticleMutationOptions(opts?: { client?: PbClient; fetch?:
 
 // --- Comments ---
 
-export function commentQueryKey(id: string) {
-  return ["comments", id] as const
+export function commentQueryKey(id: string, options?: RequestOptions) {
+  return ["comments", id, options] as const
 }
 
-export function getFirstCommentQueryKey(filter: string) {
-  return ["comments", "first", filter] as const
+export function getFirstCommentQueryKey(filter: string, options?: RequestOptions) {
+  return ["comments", "first", filter, options] as const
 }
 
 export function commentsQueryKey(params?: ListParams) {

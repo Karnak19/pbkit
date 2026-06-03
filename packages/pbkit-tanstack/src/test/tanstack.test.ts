@@ -92,13 +92,21 @@ describe("generateTanstack", () => {
   });
 
   test("generates query key helpers", () => {
-    expect(output).toContain("export function articleQueryKey(id: string)");
-    expect(output).toContain("export function getFirstArticleQueryKey(filter: string)");
+    expect(output).toContain("export function articleQueryKey(id: string, options?: RequestOptions)");
+    expect(output).toContain("export function getFirstArticleQueryKey(filter: string, options?: RequestOptions)");
     expect(output).toContain("export function articlesQueryKey(params?: ListParams)");
     expect(output).toContain("export function fullListArticlesQueryKey(params?: ListParams)");
-    expect(output).toContain("export function userQueryKey(id: string)");
-    expect(output).toContain("export function getFirstUserQueryKey(filter: string)");
+    expect(output).toContain("export function userQueryKey(id: string, options?: RequestOptions)");
+    expect(output).toContain("export function getFirstUserQueryKey(filter: string, options?: RequestOptions)");
     expect(output).toContain("export function usersQueryKey(params?: ListParams)");
+  });
+
+  test("query key helpers mirror the option factory keys exactly", () => {
+    // getQueryData/setQueryData need exact matches, so the helper must produce
+    // the same runtime key the options factory writes.
+    expect(output).toContain('return ["articles", id, options] as const');
+    expect(output).toContain('return ["articles", "first", filter, options] as const');
+    expect(output).toContain("export function articleQueryKey(id: string, options?: RequestOptions)");
   });
 
   test("avoids query helper name collisions for non-plural collection names", () => {
@@ -128,7 +136,7 @@ describe("generateTanstack", () => {
     ];
     const generated = generateTanstack(parseJson(schema), ctx);
 
-    expect(generated).toContain("export function betaFeedbackQueryKey(id: string)");
+    expect(generated).toContain("export function betaFeedbackQueryKey(id: string, options?: RequestOptions)");
     expect(generated).toContain("export function listBetaFeedbackQueryKey(params?: ListParams)");
     expect(generated).toContain("export function betaFeedbackOptions(id: string");
     expect(generated).toContain("export function listBetaFeedbackOptions(params?: ListParams,");
@@ -147,10 +155,10 @@ describe("generateTanstack", () => {
   });
 
   test("query key helpers return const arrays", () => {
-    expect(output).toContain('return ["articles", id] as const');
-    expect(output).toContain('return ["articles", "first", filter] as const');
+    expect(output).toContain('return ["articles", id, options] as const');
+    expect(output).toContain('return ["articles", "first", filter, options] as const');
     expect(output).toContain('return ["articles", params] as const');
-    expect(output).toContain('return ["users", id] as const');
+    expect(output).toContain('return ["users", id, options] as const');
   });
 
   test("mutation options do not include auto-invalidation", () => {
@@ -205,6 +213,35 @@ describe("generateTanstack", () => {
     // Disabled ops must not leave dangling imports of SDK exports never emitted.
     expect(partial).not.toContain("createArticle,");
     expect(partial).not.toContain("ArticlesCreate");
+  });
+
+  test("never emits an empty import when every operation is disabled", () => {
+    const ops = {
+      get: false,
+      getFirst: false,
+      list: false,
+      getFullList: false,
+      create: false,
+      update: false,
+      delete: false,
+    };
+    const allDisabled = generateTanstack(ir, {
+      ...ctx,
+      collections: {
+        users: { operations: ops },
+        categories: { operations: ops },
+        articles: { operations: ops },
+        comments: { operations: ops },
+      },
+    });
+    // No malformed `import { , ... }` and no runtime/SDK imports left dangling.
+    expect(allDisabled).not.toContain("import { ,");
+    expect(allDisabled).not.toMatch(/import \{\s*\}/);
+    expect(allDisabled).not.toContain("@tanstack/query-core");
+    expect(allDisabled).not.toContain("./sdk.gen");
+    // The always-present single-record key helpers still reference RequestOptions.
+    expect(allDisabled).toContain('import type { RequestOptions } from "./types.gen"');
+    expect(allDisabled).toContain("export function userQueryKey(id: string, options?: RequestOptions)");
   });
 });
 

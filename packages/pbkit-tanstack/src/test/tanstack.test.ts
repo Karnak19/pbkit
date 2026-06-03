@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { parseJson } from "@karnak19/pbkit";
-import { generateTanstack, tanstackPlugin } from "../generate";
+import { generateTanstack, tanstack } from "../generate";
 import fullSchema from "./fixtures/full-schema.json";
 
 const ir = parseJson(fullSchema);
@@ -9,17 +9,24 @@ const ctx = {
   typesImport: "./types.gen",
   sdkImport: "./sdk.gen",
 };
+const ADAPTER = "@tanstack/react-query";
 
 describe("generateTanstack", () => {
-  const output = generateTanstack(ir, ctx);
+  const output = generateTanstack(ir, ctx, ADAPTER);
 
-  test("imports from @tanstack/query-core", () => {
-    expect(output).toContain('from "@tanstack/query-core"');
+  test("imports the runtime helpers from the selected framework adapter (issue #50)", () => {
+    // `queryOptions`/`mutationOptions` are exported by the adapter, not by the
+    // neutral @tanstack/query-core (which has no such runtime exports).
+    expect(output).toContain('import { queryOptions, mutationOptions } from "@tanstack/react-query"');
+    expect(output).not.toContain("@tanstack/query-core");
+    // Imports the genuine helpers — no hand-rolled local stand-in.
+    expect(output).not.toContain("function queryOptions");
+    expect(output).not.toContain("function mutationOptions");
   });
 
-  test("imports queryOptions and mutationOptions", () => {
-    expect(output).toContain("queryOptions");
-    expect(output).toContain("mutationOptions");
+  test("uses query option factories without pulling in hooks", () => {
+    expect(output).toContain("queryOptions({");
+    expect(output).toContain("mutationOptions({");
     expect(output).not.toContain("useQuery");
     expect(output).not.toContain("useMutation");
     expect(output).not.toContain("useQueryClient");
@@ -43,7 +50,7 @@ describe("generateTanstack", () => {
       ...ctx,
       typesImport: "@karnak19/pbkit/types",
       sdkImport: "@karnak19/pbkit/sdk",
-    });
+    }, ADAPTER);
     expect(custom).toContain('from "@karnak19/pbkit/types"');
     expect(custom).toContain('from "@karnak19/pbkit/sdk"');
   });
@@ -134,7 +141,7 @@ describe("generateTanstack", () => {
         ],
       },
     ];
-    const generated = generateTanstack(parseJson(schema), ctx);
+    const generated = generateTanstack(parseJson(schema), ctx, ADAPTER);
 
     expect(generated).toContain("export function betaFeedbackQueryKey(id: string, options?: RequestOptions)");
     expect(generated).toContain("export function listBetaFeedbackQueryKey(params?: ListParams)");
@@ -195,7 +202,7 @@ describe("generateTanstack", () => {
   });
 
   test("skips excluded collections", () => {
-    const excluded = generateTanstack(ir, { ...ctx, collections: { comments: { exclude: true } } });
+    const excluded = generateTanstack(ir, { ...ctx, collections: { comments: { exclude: true } } }, ADAPTER);
     expect(excluded).not.toContain("commentOptions");
     expect(excluded).not.toContain("commentsOptions");
     expect(excluded).toContain("articleOptions<const S");
@@ -205,7 +212,7 @@ describe("generateTanstack", () => {
     const partial = generateTanstack(ir, {
       ...ctx,
       collections: { articles: { operations: { create: false, delete: false } } },
-    });
+    }, ADAPTER);
     expect(partial).not.toContain("createArticleMutationOptions(");
     expect(partial).not.toContain("deleteArticleMutationOptions(");
     expect(partial).toContain("articleOptions<const S");
@@ -233,11 +240,11 @@ describe("generateTanstack", () => {
         articles: { operations: ops },
         comments: { operations: ops },
       },
-    });
+    }, ADAPTER);
     // No malformed `import { , ... }` and no runtime/SDK imports left dangling.
     expect(allDisabled).not.toContain("import { ,");
     expect(allDisabled).not.toMatch(/import \{\s*\}/);
-    expect(allDisabled).not.toContain("@tanstack/query-core");
+    expect(allDisabled).not.toContain("@tanstack/");
     expect(allDisabled).not.toContain("./sdk.gen");
     // The always-present single-record key helpers still reference RequestOptions.
     expect(allDisabled).toContain('import type { RequestOptions } from "./types.gen"');
@@ -245,15 +252,21 @@ describe("generateTanstack", () => {
   });
 });
 
-describe("tanstackPlugin", () => {
+describe("tanstack({ framework })", () => {
   test("has correct name", () => {
-    expect(tanstackPlugin.name).toBe("@karnak19/pbkit-tanstack");
+    expect(tanstack({ framework: "react" }).name).toBe("@karnak19/pbkit-tanstack");
   });
 
-  test("generates tanstack.gen.ts file", () => {
-    const files = tanstackPlugin.generate(ctx);
+  test("generates tanstack.gen.ts importing from the chosen adapter", () => {
+    const files = tanstack({ framework: "vue" }).generate(ctx);
     expect(files).toHaveLength(1);
     expect(files[0].path).toBe("tanstack.gen.ts");
     expect(files[0].content).toContain("articleOptions");
+    expect(files[0].content).toContain('from "@tanstack/vue-query"');
+  });
+
+  test("rejects an unknown framework", () => {
+    // @ts-expect-error — "angularjs" is not a supported framework
+    expect(() => tanstack({ framework: "angularjs" })).toThrow(/unknown framework/);
   });
 });

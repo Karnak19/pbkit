@@ -39,10 +39,10 @@ For TanStack Query generation:
 
 ```bash
 bun add -d @karnak19/pbkit-tanstack
-bun add @tanstack/query-core
+bun add @tanstack/react-query # or your adapter
 ```
 
-The plugin is build-time (devDependency); `@tanstack/query-core` is imported by generated code at runtime. Install the framework adapter used by the app as well, such as `@tanstack/react-query`, `@tanstack/solid-query`, `@tanstack/svelte-query`, or `@tanstack/vue-query`.
+The plugin is build-time (devDependency). Generated code imports `queryOptions`/`mutationOptions` from the framework adapter you select via `tanstack({ framework })` — `react`, `vue`, `solid`, `svelte`, or `angular` — so install the matching adapter (`@tanstack/react-query`, `@tanstack/vue-query`, `@tanstack/solid-query`, `@tanstack/svelte-query`, or `@tanstack/angular-query-experimental`).
 
 For Zod schema generation:
 
@@ -58,7 +58,7 @@ The plugin is build-time (devDependency); `zod` is imported by the generated sch
 Create `pbkit.config.ts` in the project root (also supports `.js` and `.mjs`):
 
 ```ts
-import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
+import { tanstack } from "@karnak19/pbkit-tanstack"
 import type { PbkitConfig } from "@karnak19/pbkit"
 
 export default {
@@ -85,7 +85,7 @@ export default {
     articles: { operations: { create: false, delete: false } },
   },
 
-  plugins: [tanstackPlugin],
+  plugins: [tanstack({ framework: "react" })],
 } satisfies PbkitConfig
 ```
 
@@ -246,12 +246,12 @@ Each `subscribeTo{Collection}()` function accepts a typed callback, optional `fi
 Add the plugin to `pbkit.config.ts`:
 
 ```ts
-import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
+import { tanstack } from "@karnak19/pbkit-tanstack"
 
 export default {
   input: "https://my-pb.example.com",
   output: "./src/generated",
-  plugins: [tanstackPlugin],
+  plugins: [tanstack({ framework: "react" })],
 }
 ```
 
@@ -322,13 +322,13 @@ All plugins can be used together:
 
 ```ts
 import { zodPlugin } from "@karnak19/pbkit-zod"
-import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
+import { tanstack } from "@karnak19/pbkit-tanstack"
 import { realtimePlugin } from "@karnak19/pbkit-realtime"
 
 export default {
   input: "https://my-pb.example.com",
   output: "./src/generated",
-  plugins: [zodPlugin, tanstackPlugin, realtimePlugin],
+  plugins: [zodPlugin, tanstack({ framework: "react" }), realtimePlugin],
 }
 ```
 

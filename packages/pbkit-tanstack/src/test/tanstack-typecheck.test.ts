@@ -22,7 +22,7 @@ describe("tanstack output typechecks (tsc)", () => {
       ir,
       typesImport: "./types.gen",
       sdkImport: "./sdk.gen",
-    });
+    }, "@tanstack/react-query");
 
     // Minimal ambient stubs so the external imports resolve under tsc; mapped
     // in via tsconfig `paths`. We only need the surface the generated code uses.
@@ -30,13 +30,22 @@ describe("tanstack output typechecks (tsc)", () => {
   constructor(baseUrl?: string)
   collection(idOrName: string): any
 }`;
-    const queryCoreStub = `export declare function queryOptions<TData>(opts: {
-  queryKey: readonly unknown[]
-  queryFn: () => Promise<TData> | TData
-}): { queryKey: readonly unknown[]; queryFn: () => Promise<TData> }
-export declare function mutationOptions<TVars, TData>(opts: {
-  mutationFn: (vars: TVars) => Promise<TData> | TData
-}): { mutationFn: (vars: TVars) => Promise<TData> }`;
+    // The runtime helpers come from the framework adapter the user selected
+    // (here @tanstack/react-query), not from @tanstack/query-core (issue #50).
+    // Mirror the adapter's real signatures: queryOptions brands the queryKey
+    // with DataTag so getQueryData infers TData; mutationOptions is identity.
+    const reactQueryStub = `type QueryKey = ReadonlyArray<unknown>
+declare const dataTagSymbol: unique symbol
+declare const dataTagErrorSymbol: unique symbol
+type DataTag<TType, TValue, TError = unknown> = TType & {
+  [dataTagSymbol]: TValue
+  [dataTagErrorSymbol]: TError
+}
+export declare function queryOptions<TQueryFnData, TQueryKey extends QueryKey>(options: {
+  queryKey: TQueryKey
+  queryFn: () => TQueryFnData | Promise<TQueryFnData>
+}): typeof options & { queryKey: DataTag<TQueryKey, TQueryFnData> }
+export declare function mutationOptions<T>(options: T): T`;
 
     const consumer = `
 import { articleOptions, userOptions, createArticleMutationOptions } from "./tanstack.gen"
@@ -76,7 +85,7 @@ void bad
 
       mkdirSync(join(dir, "stubs"), { recursive: true });
       writeFileSync(join(dir, "stubs", "pocketbase.d.ts"), pbStub);
-      writeFileSync(join(dir, "stubs", "query-core.d.ts"), queryCoreStub);
+      writeFileSync(join(dir, "stubs", "react-query.d.ts"), reactQueryStub);
 
       const tsconfig = {
         compilerOptions: {
@@ -88,7 +97,7 @@ void bad
           skipLibCheck: true,
           paths: {
             pocketbase: ["./stubs/pocketbase.d.ts"],
-            "@tanstack/query-core": ["./stubs/query-core.d.ts"],
+            "@tanstack/react-query": ["./stubs/react-query.d.ts"],
           },
         },
         include: ["*.ts"],

@@ -192,7 +192,7 @@ bun add @karnak19/pbkit-tanstack
 
 ```ts
 // pbkit.config.ts
-import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
+import { tanstack } from "@karnak19/pbkit-tanstack"
 
 export default {
   input: "https://my-pb.example.com",
@@ -200,7 +200,7 @@ export default {
   sdk: {
     baseUrl: "https://my-pb.example.com",
   },
-  plugins: [tanstackPlugin],
+  plugins: [tanstack({ framework: "react" })],
 }
 ```
 

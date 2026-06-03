@@ -5,26 +5,26 @@ sidebar:
   order: 3
 ---
 
-The `@karnak19/pbkit-tanstack` package provides a plugin that generates framework-agnostic TanStack Query options and query key helpers.
+The `@karnak19/pbkit-tanstack` package provides a plugin that generates TanStack Query options and query key helpers for the framework adapter you use.
 
 ## Install
 
-The plugin runs at generation time, so it is a dev dependency.
-`@tanstack/query-core` is imported by the generated code at runtime.
+The plugin runs at generation time, so it is a dev dependency. The generated
+code imports `queryOptions`/`mutationOptions` from your framework adapter — the
+package you already use for TanStack Query (`@tanstack/react-query`,
+`@tanstack/vue-query`, etc.).
 
 ```bash
 bun add -d @karnak19/pbkit-tanstack
-bun add @tanstack/query-core
+bun add @tanstack/react-query # or your adapter
 ```
-
-Install `@tanstack/query-core` even if you already use `@tanstack/react-query` (or another adapter). The generated code imports `query-core` directly, and strict package managers (pnpm, bun) won't expose it as a transitive dependency of the adapter — without the direct install, `tsc` reports `Cannot find module '@tanstack/query-core'`.
 
 ## Setup
 
-Add the plugin to your `pbkit.config.ts`:
+Add the plugin to your `pbkit.config.ts`, passing the `framework` you target:
 
 ```ts
-import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
+import { tanstack } from "@karnak19/pbkit-tanstack"
 
 export default {
   input: "https://my-pb.example.com",
@@ -32,9 +32,19 @@ export default {
   sdk: {
     baseUrl: "https://my-pb.example.com",
   },
-  plugins: [tanstackPlugin],
+  plugins: [tanstack({ framework: "react" })],
 }
 ```
+
+`framework` is required and selects which adapter the generated code imports from:
+
+| `framework` | adapter package                        |
+| ----------- | -------------------------------------- |
+| `react`     | `@tanstack/react-query`                |
+| `vue`       | `@tanstack/vue-query`                  |
+| `solid`     | `@tanstack/solid-query`                |
+| `svelte`    | `@tanstack/svelte-query`               |
+| `angular`   | `@tanstack/angular-query-experimental` |
 
 After running `bunx pbkit generate`, a `tanstack.gen.ts` file is created alongside `types.gen.ts`, `client.gen.ts`, and `sdk.gen.ts`.
 
@@ -185,9 +195,9 @@ queryClient.invalidateQueries({ queryKey: articleQueryKey("RECORD_ID") })
 queryClient.invalidateQueries({ queryKey: ["articles"] })
 ```
 
-## Framework-agnostic
+## Framework adapter
 
-The generated options import from `@tanstack/query-core`, not `@tanstack/react-query`. This means you can use them with any TanStack Query adapter (React, Solid, Svelte, Vue).
+The generated options import the genuine `queryOptions`/`mutationOptions` from the adapter you selected via `framework`. Because they are the real adapter helpers, `.data` is fully typed and `queryClient.getQueryData(key)` keeps the inferred `TData` (via TanStack's `DataTag` branding).
 
 ## Collection filtering
 
@@ -198,6 +208,6 @@ export default {
   collections: {
     articles: { operations: { delete: false } }, // no deleteArticleMutationOptions
   },
-  plugins: [tanstackPlugin],
+  plugins: [tanstack({ framework: "react" })],
 }
 ```

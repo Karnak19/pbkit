@@ -1,1 +1,2 @@
-export { generateTanstack, tanstackPlugin } from "./generate"
+export { generateTanstack, tanstack } from "./generate"
+export type { TanstackFramework, TanstackPluginOptions } from "./generate"

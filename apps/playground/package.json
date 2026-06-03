@@ -9,7 +9,7 @@
   "dependencies": {
     "@karnak19/pbkit": "workspace:*",
     "@karnak19/pbkit-tanstack": "workspace:*",
-    "@tanstack/query-core": "^5.0.0"
+    "@tanstack/react-query": "^5.0.0"
   },
   "devDependencies": {
     "vite": "^6.4.2"

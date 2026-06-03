@@ -147,11 +147,11 @@ Add the TanStack plugin when you want generated `queryOptions`,
 `mutationOptions`, and query key helpers:
 
 ```bash
-bun add @karnak19/pbkit-tanstack @tanstack/query-core
+bun add @karnak19/pbkit-tanstack @tanstack/react-query # or your adapter
 ```
 
 ```ts
-import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
+import { tanstack } from "@karnak19/pbkit-tanstack"
 import type { PbkitConfig } from "@karnak19/pbkit"
 
 export default {
@@ -160,7 +160,7 @@ export default {
   sdk: {
     baseUrl: "https://my-pocketbase.example.com",
   },
-  plugins: [tanstackPlugin],
+  plugins: [tanstack({ framework: "react" })],
 } satisfies PbkitConfig
 ```
 

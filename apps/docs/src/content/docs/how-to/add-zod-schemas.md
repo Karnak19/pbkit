@@ -132,12 +132,12 @@ Use both plugins together for full type safety and runtime validation:
 
 ```ts
 import { zodPlugin } from "@karnak19/pbkit-zod"
-import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
+import { tanstack } from "@karnak19/pbkit-tanstack"
 
 export default {
   input: "https://my-pb.example.com",
   output: "./src/generated",
-  plugins: [zodPlugin, tanstackPlugin],
+  plugins: [zodPlugin, tanstack({ framework: "react" })],
 }
 ```
 

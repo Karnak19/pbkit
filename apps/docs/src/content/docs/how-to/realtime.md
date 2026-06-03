@@ -165,13 +165,13 @@ The generated helpers use the PocketBase client directly via `client.collection(
 All plugins can be used together:
 
 ```ts
-import { tanstackPlugin } from "@karnak19/pbkit-tanstack"
+import { tanstack } from "@karnak19/pbkit-tanstack"
 import { zodPlugin } from "@karnak19/pbkit-zod"
 import { realtimePlugin } from "@karnak19/pbkit-realtime"
 
 export default {
   input: "https://my-pb.example.com",
   output: "./src/generated",
-  plugins: [tanstackPlugin, zodPlugin, realtimePlugin],
+  plugins: [tanstack({ framework: "react" }), zodPlugin, realtimePlugin],
 }
 ```

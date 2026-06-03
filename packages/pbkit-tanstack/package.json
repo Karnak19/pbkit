@@ -1,6 +1,6 @@
 {
   "name": "@karnak19/pbkit-tanstack",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "TanStack Query options plugin for pbkit",
   "homepage": "https://karnak19.github.io/pbkit/",
   "repository": {
@@ -45,11 +45,21 @@
     "@tanstack/vue-query": "^5.0.0"
   },
   "peerDependenciesMeta": {
-    "@tanstack/angular-query-experimental": { "optional": true },
-    "@tanstack/react-query": { "optional": true },
-    "@tanstack/solid-query": { "optional": true },
-    "@tanstack/svelte-query": { "optional": true },
-    "@tanstack/vue-query": { "optional": true }
+    "@tanstack/angular-query-experimental": {
+      "optional": true
+    },
+    "@tanstack/react-query": {
+      "optional": true
+    },
+    "@tanstack/solid-query": {
+      "optional": true
+    },
+    "@tanstack/svelte-query": {
+      "optional": true
+    },
+    "@tanstack/vue-query": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@karnak19/pbkit": "workspace:*",

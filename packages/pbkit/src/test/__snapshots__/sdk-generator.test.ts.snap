@@ -5,9 +5,10 @@ exports[`generateSdk snapshot 1`] = `
 
 import { client } from "./client.gen"
 import type { PbClient } from "./client.gen"
-import type { UsersRecord, UsersCreate, UsersUpdate, CategoriesRecord, CategoriesCreate, CategoriesUpdate, ArticlesRecord, ArticlesCreate, ArticlesUpdate, ArticlesRelations, CommentsRecord, CommentsCreate, CommentsUpdate, CommentsRelations, BuildExpand, Split } from "./types.gen"
+import type { ListParams, RequestOptions, UsersRecord, UsersCreate, UsersUpdate, CategoriesRecord, CategoriesCreate, CategoriesUpdate, ArticlesRecord, ArticlesCreate, ArticlesUpdate, ArticlesRelations, CommentsRecord, CommentsCreate, CommentsUpdate, CommentsRelations, BuildExpand, Split } from "./types.gen"
 
 export type { PbClient }
+export type { ListParams, RequestOptions }
 
 export interface ListResult<T> {
   page: number
@@ -15,24 +16,6 @@ export interface ListResult<T> {
   totalItems: number
   totalPages: number
   items: T[]
-}
-
-export interface ListParams {
-  page?: number
-  perPage?: number
-  sort?: string
-  filter?: string
-  expand?: string
-  fields?: string
-  fetch?: typeof fetch
-}
-
-export interface RequestOptions {
-  expand?: string
-  filter?: string
-  sort?: string
-  fields?: string
-  fetch?: typeof fetch
 }
 
 // --- Users ---

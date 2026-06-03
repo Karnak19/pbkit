@@ -32,18 +32,10 @@ describe("generateSdk", () => {
 
   test("exports shared types", () => {
     expect(output).toContain("export interface ListResult<T>");
-    expect(output).toContain("export interface ListParams");
-    expect(output).toContain("export interface RequestOptions");
-  });
-
-  test("RequestOptions includes fetch property", () => {
-    expect(output).toContain("fetch?: typeof fetch");
-  });
-
-  test("ListParams includes fetch property", () => {
-    const listParamsMatch = output.match(/export interface ListParams \{[^}]+\}/);
-    expect(listParamsMatch).toBeTruthy();
-    expect(listParamsMatch![0]).toContain("fetch?: typeof fetch");
+    // ListParams/RequestOptions now live in types.gen; the SDK imports and
+    // re-exports them so existing `from "./sdk.gen"` imports keep working.
+    expect(output).toContain("export type { ListParams, RequestOptions }");
+    expect(output).toContain("ListParams, RequestOptions");
   });
 
   test("imports all Record/Create/Update types", () => {

@@ -154,6 +154,19 @@ describe("generate", () => {
     expect(output).toContain('export type CollectionName = "users" | "categories" | "articles" | "comments"')
   })
 
+  test("emits the shared request types (single home for ListParams/RequestOptions)", () => {
+    const output = generate(ir)
+    expect(output).toContain("export interface ListParams")
+    expect(output).toContain("export interface RequestOptions")
+  })
+
+  test("ListParams includes fetch property", () => {
+    const output = generate(ir)
+    const listParamsMatch = output.match(/export interface ListParams \{[^}]+\}/)
+    expect(listParamsMatch).toBeTruthy()
+    expect(listParamsMatch![0]).toContain("fetch?: typeof fetch")
+  })
+
   test("optional fields are marked with ?", () => {
     const output = generate(ir)
     expect(output).toContain("content?:")

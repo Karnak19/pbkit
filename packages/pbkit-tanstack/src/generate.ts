@@ -3,6 +3,20 @@ import type { PbkitPlugin, PluginContext, PluginOutputFile } from "@karnak19/pbk
 import { isCollectionExcluded, isOperationEnabled, pascalCase } from "@karnak19/pbkit";
 import type { OperationName } from "@karnak19/pbkit";
 
+// A collection's read functions are generic over the requested expand string
+// when it has at least one forward relation whose target is generated. This
+// must match the SDK generator's `hasRelationsMap`, so the query factory's
+// generic lines up with the SDK function it calls.
+function hasRelations(
+  col: CollectionSchema,
+  ir: SchemaIR,
+  collections?: CollectionsConfig,
+): boolean {
+  return ir.relations.some(
+    (r) => r.collectionName === col.name && !isCollectionExcluded(r.targetCollectionName, collections),
+  );
+}
+
 function singularize(name: string): string {
   if (name.endsWith("ies")) return name.slice(0, -3) + "y";
   if (name.endsWith("ses")) return name.slice(0, -2);
@@ -27,14 +41,18 @@ function queryKeyHelpers(col: CollectionSchema, collections?: CollectionsConfig)
   const lines: string[] = [];
   const op = (name: OperationName) => isOperationEnabled(col.name, name, collections);
 
-  lines.push(`export function ${lowerFirst(s)}QueryKey(id: string) {`);
-  lines.push(`  return [${c}, id] as const`);
+  // Keys mirror the query option factories exactly (including `options`), so
+  // `getQueryData`/`setQueryData` with these helpers hit the same cache slot
+  // the options factory wrote. Prefix invalidation still works via the literal
+  // `[name, id]` slice.
+  lines.push(`export function ${lowerFirst(s)}QueryKey(id: string, options?: RequestOptions) {`);
+  lines.push(`  return [${c}, id, options] as const`);
   lines.push("}");
   lines.push("");
 
   if (op("getFirst")) {
-    lines.push(`export function getFirst${s}QueryKey(filter: string) {`);
-    lines.push(`  return [${c}, "first", filter] as const`);
+    lines.push(`export function getFirst${s}QueryKey(filter: string, options?: RequestOptions) {`);
+    lines.push(`  return [${c}, "first", filter, options] as const`);
     lines.push("}");
     lines.push("");
   }
@@ -56,7 +74,11 @@ function queryKeyHelpers(col: CollectionSchema, collections?: CollectionsConfig)
   return lines;
 }
 
-function queryOptions_(col: CollectionSchema, collections?: CollectionsConfig): string[] {
+function queryOptions_(
+  col: CollectionSchema,
+  ir: SchemaIR,
+  collections?: CollectionsConfig,
+): string[] {
   const p = pascalCase(col.name);
   const s = pascalCase(singularize(col.name));
   const listName = listHelperName(p, s);
@@ -64,38 +86,53 @@ function queryOptions_(col: CollectionSchema, collections?: CollectionsConfig): 
   const lines: string[] = [];
   const op = (name: OperationName) => isOperationEnabled(col.name, name, collections);
 
+  // Mirror the SDK read functions: when the collection has relations, the
+  // factory is generic over the expand string `S` so `.data.expand` stays typed.
+  const rel = hasRelations(col, ir, collections);
+  const gen = rel ? "<const S extends string | undefined = undefined>" : "";
+  const reqOpt = rel ? `Omit<RequestOptions, "expand"> & { expand?: S }` : "RequestOptions";
+  const listOpt = rel ? `Omit<ListParams, "expand"> & { expand?: S }` : "ListParams";
+
   if (op("get")) {
-    lines.push(`export function ${lowerFirst(s)}Options(id: string, options?: RequestOptions) {`);
+    lines.push(
+      `export function ${lowerFirst(s)}Options${gen}(id: string, options?: ${reqOpt}, opts?: { client?: PbClient }) {`,
+    );
     lines.push("  return queryOptions({");
-    lines.push(`    queryKey: [${c}, id],`);
-    lines.push(`    queryFn: () => get${s}(id, options),`);
+    lines.push(`    queryKey: [${c}, id, options],`);
+    lines.push(`    queryFn: () => get${s}(id, options, opts),`);
     lines.push("  })");
     lines.push("}");
     lines.push("");
   }
   if (op("getFirst")) {
-    lines.push(`export function getFirst${s}Options(filter: string, options?: RequestOptions) {`);
+    lines.push(
+      `export function getFirst${s}Options${gen}(filter: string, options?: ${reqOpt}, opts?: { client?: PbClient }) {`,
+    );
     lines.push("  return queryOptions({");
-    lines.push(`    queryKey: [${c}, "first", filter],`);
-    lines.push(`    queryFn: () => getFirst${s}(filter, options),`);
+    lines.push(`    queryKey: [${c}, "first", filter, options],`);
+    lines.push(`    queryFn: () => getFirst${s}(filter, options, opts),`);
     lines.push("  })");
     lines.push("}");
     lines.push("");
   }
   if (op("list")) {
-    lines.push(`export function ${listName}Options(params?: ListParams) {`);
+    lines.push(
+      `export function ${listName}Options${gen}(params?: ${listOpt}, opts?: { client?: PbClient }) {`,
+    );
     lines.push("  return queryOptions({");
     lines.push(`    queryKey: [${c}, params],`);
-    lines.push(`    queryFn: () => list${p}(params),`);
+    lines.push(`    queryFn: () => list${p}(params, opts),`);
     lines.push("  })");
     lines.push("}");
     lines.push("");
   }
   if (op("getFullList")) {
-    lines.push(`export function fullList${p}Options(params?: ListParams) {`);
+    lines.push(
+      `export function fullList${p}Options${gen}(params?: ${listOpt}, opts?: { client?: PbClient }) {`,
+    );
     lines.push("  return queryOptions({");
     lines.push(`    queryKey: [${c}, "full", params],`);
-    lines.push(`    queryFn: () => getFullList${p}(params),`);
+    lines.push(`    queryFn: () => getFullList${p}(params, opts),`);
     lines.push("  })");
     lines.push("}");
   }
@@ -142,25 +179,62 @@ export function generateTanstack(ir: SchemaIR, ctx: PluginContext): string {
   const parts: string[] = [];
   const cols = ir.collections.filter((c) => !isCollectionExcluded(c.name, ctx.collections));
 
+  const op = (name: string, col: CollectionSchema) =>
+    isOperationEnabled(col.name, name as OperationName, ctx.collections);
+
+  // Only import the runtime functions and types the output actually references,
+  // so disabling operations doesn't pull in SDK exports that were never emitted.
   const sdkImports = cols.flatMap((c) => {
     const p = pascalCase(c.name);
     const s = pascalCase(singularize(c.name));
-    return [
-      `get${s}`,
-      `getFirst${s}`,
-      `list${p}`,
-      `getFullList${p}`,
-      `create${s}`,
-      `update${s}`,
-      `delete${s}`,
-    ];
+    const names: string[] = [];
+    if (op("get", c)) names.push(`get${s}`);
+    if (op("getFirst", c)) names.push(`getFirst${s}`);
+    if (op("list", c)) names.push(`list${p}`);
+    if (op("getFullList", c)) names.push(`getFullList${p}`);
+    if (op("create", c)) names.push(`create${s}`);
+    if (op("update", c)) names.push(`update${s}`);
+    if (op("delete", c)) names.push(`delete${s}`);
+    return names;
   });
+
+  const hasQuery = cols.some(
+    (c) => op("get", c) || op("getFirst", c) || op("list", c) || op("getFullList", c),
+  );
+  const hasMutation = cols.some((c) => op("create", c) || op("update", c) || op("delete", c));
+  const needsListParams = cols.some((c) => op("list", c) || op("getFullList", c));
+
+  // Import only what the output references, and never emit an empty `import {}`
+  // — a config that disables every operation reduces this to the always-present
+  // single-record key helpers (which use RequestOptions) and nothing else.
+  const typeImports = [
+    ...(needsListParams ? ["ListParams"] : []),
+    ...(cols.length > 0 ? ["RequestOptions"] : []),
+    ...cols.flatMap((c) => {
+      const p = pascalCase(c.name);
+      const names: string[] = [];
+      if (op("create", c)) names.push(`${p}Create`);
+      if (op("update", c)) names.push(`${p}Update`);
+      return names;
+    }),
+  ];
+
+  const runtimeImports = [
+    ...(hasQuery ? ["queryOptions"] : []),
+    ...(hasMutation ? ["mutationOptions"] : []),
+  ];
 
   parts.push("// Generated by pbkit-tanstack — do not edit");
   parts.push("");
-  parts.push('import { queryOptions, mutationOptions } from "@tanstack/query-core"');
-  parts.push(`import type { ListParams, RequestOptions } from "${ctx.typesImport}"`);
-  parts.push(`import { ${sdkImports.join(", ")}, type PbClient } from "${ctx.sdkImport}"`);
+  if (runtimeImports.length > 0) {
+    parts.push(`import { ${runtimeImports.join(", ")} } from "@tanstack/query-core"`);
+  }
+  if (typeImports.length > 0) {
+    parts.push(`import type { ${typeImports.join(", ")} } from "${ctx.typesImport}"`);
+  }
+  if (sdkImports.length > 0) {
+    parts.push(`import { ${sdkImports.join(", ")}, type PbClient } from "${ctx.sdkImport}"`);
+  }
   parts.push("");
 
   for (const col of cols) {
@@ -168,7 +242,7 @@ export function generateTanstack(ir: SchemaIR, ctx: PluginContext): string {
     parts.push(`// --- ${p} ---`);
     parts.push("");
     parts.push(...queryKeyHelpers(col, ctx.collections));
-    parts.push(...queryOptions_(col, ctx.collections));
+    parts.push(...queryOptions_(col, ir, ctx.collections));
     parts.push(...mutationOptions_(col, ctx.collections));
     parts.push("");
   }

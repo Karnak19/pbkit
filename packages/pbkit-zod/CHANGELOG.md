@@ -1,5 +1,12 @@
 # @karnak19/pbkit-zod
 
+## 2.0.0
+
+### Patch Changes
+
+- Updated dependencies [a253c2c]
+  - @karnak19/pbkit@0.6.0
+
 ## 1.0.0
 
 ### Minor Changes

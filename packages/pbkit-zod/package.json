@@ -1,6 +1,6 @@
 {
   "name": "@karnak19/pbkit-zod",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Zod schema plugin for pbkit",
   "homepage": "https://karnak19.github.io/pbkit/",
   "repository": {
@@ -37,7 +37,7 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@karnak19/pbkit": "^0.5.0",
+    "@karnak19/pbkit": "^0.6.0",
     "zod": "^3.0.0"
   },
   "devDependencies": {

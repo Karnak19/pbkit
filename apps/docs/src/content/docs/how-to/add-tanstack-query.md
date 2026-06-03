@@ -17,6 +17,8 @@ bun add -d @karnak19/pbkit-tanstack
 bun add @tanstack/query-core
 ```
 
+Install `@tanstack/query-core` even if you already use `@tanstack/react-query` (or another adapter). The generated code imports `query-core` directly, and strict package managers (pnpm, bun) won't expose it as a transitive dependency of the adapter — without the direct install, `tsc` reports `Cannot find module '@tanstack/query-core'`.
+
 ## Setup
 
 Add the plugin to your `pbkit.config.ts`:
@@ -72,6 +74,25 @@ const { data } = useQuery(articleOptions("RECORD_ID"))
 // List with pagination
 const { data } = useQuery(articlesOptions({ page: 1, perPage: 20 }))
 ```
+
+Like the SDK read functions, query factories are generic over the `expand`
+string, so `.expand` stays typed:
+
+```ts
+// data.expand.author is typed as UsersRecord
+const { data } = useQuery(articleOptions("RECORD_ID", { expand: "author" }))
+```
+
+They also accept an optional `opts` with a `client` override — symmetric with
+the mutation factories — for cookie-authed browser clients or per-request SSR
+clients:
+
+```ts
+const { data } = useQuery(articleOptions("RECORD_ID", undefined, { client: pbServer }))
+```
+
+The single-record and first-match keys include `options`, so distinct
+`expand`/`fields` variants get distinct cache entries instead of colliding.
 
 ### Mutation options
 

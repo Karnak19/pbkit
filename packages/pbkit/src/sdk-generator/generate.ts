@@ -248,12 +248,12 @@ export function generateSdk(
 
   const cols = ir.collections.filter((c) => !isCollectionExcluded(c.name, options.collections));
 
-  const typeImports = cols.flatMap((c) => {
+  const typeImports = ["ListParams", "RequestOptions", ...cols.flatMap((c) => {
     const p = pascalCase(c.name);
     const imports = [`${p}Record`, `${p}Create`, `${p}Update`];
     if (hasRelationsMap(c, ir, options.collections)) imports.push(`${p}Relations`);
     return imports;
-  });
+  })];
   if (cols.some((c) => hasRelationsMap(c, ir, options.collections))) {
     typeImports.push("BuildExpand", "Split");
   }
@@ -267,6 +267,7 @@ export function generateSdk(
   parts.push(`import type { ${typeImports.join(", ")} } from "${typesImport}"`);
   parts.push("");
   parts.push(`export type { PbClient }`);
+  parts.push(`export type { ListParams, RequestOptions }`);
   parts.push("");
   parts.push("export interface ListResult<T> {");
   parts.push("  page: number");
@@ -274,24 +275,6 @@ export function generateSdk(
   parts.push("  totalItems: number");
   parts.push("  totalPages: number");
   parts.push("  items: T[]");
-  parts.push("}");
-  parts.push("");
-  parts.push("export interface ListParams {");
-  parts.push("  page?: number");
-  parts.push("  perPage?: number");
-  parts.push("  sort?: string");
-  parts.push("  filter?: string");
-  parts.push("  expand?: string");
-  parts.push("  fields?: string");
-  parts.push("  fetch?: typeof fetch");
-  parts.push("}");
-  parts.push("");
-  parts.push("export interface RequestOptions {");
-  parts.push("  expand?: string");
-  parts.push("  filter?: string");
-  parts.push("  sort?: string");
-  parts.push("  fields?: string");
-  parts.push("  fetch?: typeof fetch");
   parts.push("}");
   parts.push("");
 

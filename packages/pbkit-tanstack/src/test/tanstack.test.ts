@@ -49,20 +49,37 @@ describe("generateTanstack", () => {
   });
 
   test("generates query options for each collection", () => {
+    // Collections without relations stay non-generic.
     expect(output).toContain("export function userOptions(");
     expect(output).toContain("export function getFirstUserOptions(");
     expect(output).toContain("export function usersOptions(");
     expect(output).toContain("export function fullListUsersOptions(");
-    expect(output).toContain("export function articleOptions(");
-    expect(output).toContain("export function getFirstArticleOptions(");
-    expect(output).toContain("export function articlesOptions(");
-    expect(output).toContain("export function fullListArticlesOptions(");
     expect(output).toContain("export function categoryOptions(");
     expect(output).toContain("export function getFirstCategoryOptions(");
     expect(output).toContain("export function categoriesOptions(");
-    expect(output).toContain("export function commentOptions(");
-    expect(output).toContain("export function getFirstCommentOptions(");
-    expect(output).toContain("export function commentsOptions(");
+    // Collections with relations are generic over the expand string.
+    expect(output).toContain("export function articleOptions<const S");
+    expect(output).toContain("export function getFirstArticleOptions<const S");
+    expect(output).toContain("export function articlesOptions<const S");
+    expect(output).toContain("export function fullListArticlesOptions<const S");
+    expect(output).toContain("export function commentOptions<const S");
+    expect(output).toContain("export function getFirstCommentOptions<const S");
+    expect(output).toContain("export function commentsOptions<const S");
+  });
+
+  test("query options accept a client override symmetric with mutations", () => {
+    expect(output).toContain("export function userOptions(id: string, options?: RequestOptions, opts?: { client?: PbClient })");
+    expect(output).toContain('queryFn: () => getUser(id, options, opts)');
+    expect(output).toContain('queryFn: () => listUsers(params, opts)');
+  });
+
+  test("query factories preserve the expand generic for relation collections", () => {
+    expect(output).toContain(
+      'export function articleOptions<const S extends string | undefined = undefined>(id: string, options?: Omit<RequestOptions, "expand"> & { expand?: S }, opts?: { client?: PbClient })',
+    );
+    expect(output).toContain(
+      'export function articlesOptions<const S extends string | undefined = undefined>(params?: Omit<ListParams, "expand"> & { expand?: S }, opts?: { client?: PbClient })',
+    );
   });
 
   test("generates mutation options for each collection", () => {
@@ -114,17 +131,19 @@ describe("generateTanstack", () => {
     expect(generated).toContain("export function betaFeedbackQueryKey(id: string)");
     expect(generated).toContain("export function listBetaFeedbackQueryKey(params?: ListParams)");
     expect(generated).toContain("export function betaFeedbackOptions(id: string");
-    expect(generated).toContain("export function listBetaFeedbackOptions(params?: ListParams)");
+    expect(generated).toContain("export function listBetaFeedbackOptions(params?: ListParams,");
     expect(generated.match(/export function betaFeedbackQueryKey/g)).toHaveLength(1);
     expect(generated.match(/export function betaFeedbackOptions/g)).toHaveLength(1);
   });
 
   test("query options use correct query keys", () => {
-    expect(output).toContain('queryKey: ["articles", id]');
-    expect(output).toContain('queryKey: ["articles", "first", filter]');
+    // Single-record and getFirst keys include options so distinct expand/fields
+    // produce distinct cache entries (issue #47 gap #6).
+    expect(output).toContain('queryKey: ["articles", id, options]');
+    expect(output).toContain('queryKey: ["articles", "first", filter, options]');
     expect(output).toContain('queryKey: ["articles", params]');
     expect(output).toContain('queryKey: ["articles", "full", params]');
-    expect(output).toContain('queryKey: ["users", id]');
+    expect(output).toContain('queryKey: ["users", id, options]');
   });
 
   test("query key helpers return const arrays", () => {
@@ -139,9 +158,9 @@ describe("generateTanstack", () => {
     expect(output).not.toContain("onSuccess");
   });
 
-  test("query options call SDK functions without pb", () => {
-    expect(output).toContain("queryFn: () => getArticle(id, options)");
-    expect(output).toContain("queryFn: () => listArticles(params)");
+  test("query options thread options and opts into SDK functions", () => {
+    expect(output).toContain("queryFn: () => getArticle(id, options, opts)");
+    expect(output).toContain("queryFn: () => listArticles(params, opts)");
   });
 
   test("mutation options call SDK functions with opts", () => {
@@ -169,9 +188,9 @@ describe("generateTanstack", () => {
 
   test("skips excluded collections", () => {
     const excluded = generateTanstack(ir, { ...ctx, collections: { comments: { exclude: true } } });
-    expect(excluded).not.toContain("commentOptions(");
-    expect(excluded).not.toContain("commentsOptions(");
-    expect(excluded).toContain("articleOptions(");
+    expect(excluded).not.toContain("commentOptions");
+    expect(excluded).not.toContain("commentsOptions");
+    expect(excluded).toContain("articleOptions<const S");
   });
 
   test("skips disabled operations", () => {
@@ -181,8 +200,11 @@ describe("generateTanstack", () => {
     });
     expect(partial).not.toContain("createArticleMutationOptions(");
     expect(partial).not.toContain("deleteArticleMutationOptions(");
-    expect(partial).toContain("articleOptions(");
+    expect(partial).toContain("articleOptions<const S");
     expect(partial).toContain("updateArticleMutationOptions(");
+    // Disabled ops must not leave dangling imports of SDK exports never emitted.
+    expect(partial).not.toContain("createArticle,");
+    expect(partial).not.toContain("ArticlesCreate");
   });
 });
 

@@ -17,6 +17,24 @@ export interface AuthRecord extends BaseRecord {
   verified: boolean
 }
 
+export interface ListParams {
+  page?: number
+  perPage?: number
+  sort?: string
+  filter?: string
+  expand?: string
+  fields?: string
+  fetch?: typeof fetch
+}
+
+export interface RequestOptions {
+  expand?: string
+  filter?: string
+  sort?: string
+  fields?: string
+  fetch?: typeof fetch
+}
+
 // Users
 
 export type UsersRecord = AuthRecord & {

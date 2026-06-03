@@ -275,6 +275,27 @@ export function generate(ir: SchemaIR, options: InternalOptions = {}): string {
     parts.push("")
   }
 
+  // Request shapes are types, so they live here in types.gen — sdk.gen and any
+  // plugin (e.g. pbkit-tanstack) import them from this single home.
+  parts.push("export interface ListParams {")
+  parts.push("  page?: number")
+  parts.push("  perPage?: number")
+  parts.push("  sort?: string")
+  parts.push("  filter?: string")
+  parts.push("  expand?: string")
+  parts.push("  fields?: string")
+  parts.push("  fetch?: typeof fetch")
+  parts.push("}")
+  parts.push("")
+  parts.push("export interface RequestOptions {")
+  parts.push("  expand?: string")
+  parts.push("  filter?: string")
+  parts.push("  sort?: string")
+  parts.push("  fields?: string")
+  parts.push("  fetch?: typeof fetch")
+  parts.push("}")
+  parts.push("")
+
   for (const col of cols) {
     const name = pascalCase(col.name)
     parts.push(`// ${name}`)

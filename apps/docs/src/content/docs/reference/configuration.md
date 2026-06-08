@@ -97,13 +97,26 @@ sdk: {
 }
 ```
 
+## `includeSystem`
+
+Generate PocketBase system collections (`_superusers`, `_authOrigins`, `_externalAuths`, `_mfas`, `_otps`, …).
+
+```ts
+// Default: false — system collections are skipped by every generator
+includeSystem: false
+```
+
+By default, any collection flagged `system` in the schema is excluded from types, SDK functions, plugin output, the `CollectionName` union, and `RelationsMap`/expand paths. Set `includeSystem: true` to generate them.
+
+A per-collection `exclude: false` does **not** override this default — use `includeSystem: true` to bring system collections back.
+
 ## `collections`
 
 Per-collection configuration. See [Configure collections](/how-to/configure-collections) for details.
 
 ```ts
 collections: {
-  _superusers: { exclude: true },
+  logs: { exclude: true },
   articles: { operations: { create: false, delete: false } },
 }
 ```
@@ -138,8 +151,10 @@ export default {
     baseUrl: "https://my-pb.example.com",
   },
 
+  // System collections (_superusers, _mfas, …) are excluded by default
+  includeSystem: false,
+
   collections: {
-    _superusers: { exclude: true },
     logs: { exclude: true },
     articles: { operations: { create: false, delete: false } },
   },

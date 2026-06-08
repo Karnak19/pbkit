@@ -13,10 +13,24 @@ Set `exclude: true` to skip a collection entirely — no types, SDK functions, o
 
 ```ts
 collections: {
-  _superusers: { exclude: true },
   logs: { exclude: true },
 }
 ```
+
+## System collections
+
+PocketBase ships internal **system collections** — `_superusers`, `_authOrigins`, `_externalAuths`, `_mfas`, `_otps`, and so on. These are **excluded by default**: pbkit skips any collection flagged `system` in the schema, so you don't get `SuperusersRecord`, `createOtp()`, and the like. They're also absent from the `CollectionName` union and from any `RelationsMap`/expand paths.
+
+To generate them, set the top-level [`includeSystem`](/reference/configuration#includesystem) option:
+
+```ts
+export default {
+  // ...
+  includeSystem: true, // generate _superusers, _mfas, … as well
+}
+```
+
+A per-collection `exclude: false` does **not** override the system default — use `includeSystem: true` for that.
 
 ## Control CRUD operations
 

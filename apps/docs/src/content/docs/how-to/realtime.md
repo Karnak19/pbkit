@@ -149,7 +149,6 @@ The plugin respects the `collections` config — excluded collections won't gene
 ```ts
 export default {
   collections: {
-    _superusers: { exclude: true },
     logs: { exclude: true },
   },
   plugins: [realtimePlugin],

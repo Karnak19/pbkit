@@ -109,10 +109,12 @@ export default {
     typesImport: "./types.gen",   // Custom types import path
   },
 
+  // System collections (_superusers, _mfas, …) are excluded by default
+  includeSystem: false,
+
   // Collection-level configuration
   collections: {
-    _superusers: { exclude: true },                    // Skip entirely
-    logs: { exclude: true },
+    logs: { exclude: true },                           // Skip entirely
     articles: { operations: { create: false, delete: false } },  // Disable specific CRUD ops
     listings: { fields: { tech_spec: { type: "TechSpec", from: "$/lib/specs" } } }, // Type a json field
   },

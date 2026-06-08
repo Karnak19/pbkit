@@ -1,5 +1,43 @@
 # @karnak19/pbkit
 
+## 1.0.0
+
+### Major Changes
+
+- f6fe8d8: Release 1.0.0. pbkit's core surface — the `PbkitConfig` schema, the generated `types.gen.ts`/`sdk.gen.ts`/`client.gen.ts`, the programmatic API (`generateProject`, `generate`, `generateSdk`, schema parsers), and the plugin contract (`PbkitPlugin`/`PluginContext`) — is now considered stable and follows semver going forward.
+
+### Minor Changes
+
+- 9fbb694: Generate the password-confirmation fields that PocketBase's auth API requires (#53).
+
+  For auth collections, the generated request types now include:
+
+  - `Create`: a required `passwordConfirm: string` alongside `password`.
+  - `Update`: an optional `oldPassword?: string` (and `passwordConfirm?` via `Partial<Create>`), for self-service password changes.
+
+  ```ts
+  export type UsersCreate = {
+    password: string;
+    passwordConfirm: string;
+    // ...
+  };
+  export type UsersUpdate = Partial<UsersCreate> & {
+    oldPassword?: string;
+  };
+  ```
+
+  `createUser({ email, password, passwordConfirm })` now typechecks without a cast, and password-change updates accept `{ oldPassword, password, passwordConfirm }`. Non-auth collections are unaffected.
+
+- bc448b4: Exclude PocketBase system collections (`_superusers`, `_mfas`, `_otps`, …) from codegen by default (#56).
+
+  Real PocketBase schemas always ship internal system collections, and consumers had to exclude each one by hand. Now any collection with `system === true` in the schema is skipped by every generator (types, SDK, and the zod/tanstack/realtime plugins) and from the `CollectionName` union, `RelationsMap`, and expand paths. Relations that point at a system collection are handled consistently — no dangling `Record` references.
+
+  - **Default:** system collections are not generated.
+  - **Opt-out:** set the top-level `includeSystem: true` on your config to generate them as before.
+  - Precedence: a per-collection `exclude: false` does **not** override the system default — use `includeSystem` for that.
+
+  This keys off the schema's `system` flag, so no hardcoded name list has to be maintained as PocketBase adds new internal collections. Schemas without system collections produce byte-for-byte identical output.
+
 ## 0.6.0
 
 ### Minor Changes

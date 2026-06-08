@@ -1,6 +1,6 @@
 {
   "name": "@karnak19/pbkit-tanstack",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "TanStack Query options plugin for pbkit",
   "homepage": "https://karnak19.github.io/pbkit/",
   "repository": {
@@ -37,7 +37,7 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@karnak19/pbkit": "^0.6.0",
+    "@karnak19/pbkit": "^1.0.0",
     "@tanstack/angular-query-experimental": "^5.0.0",
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/solid-query": "^5.0.0",

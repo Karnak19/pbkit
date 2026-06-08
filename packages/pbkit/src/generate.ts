@@ -5,7 +5,7 @@ import { parseJsonFile } from "./schema-parser/parse-json";
 import { generate } from "./type-generator/generate";
 import { generateSdk, generateClientFile } from "./sdk-generator/generate";
 import type { PbkitConfig, InputConfig } from "./config/types";
-import { isCollectionExcluded, getFieldConfig } from "./config";
+import { createExclusionPredicate, getFieldConfig } from "./config";
 import type { SchemaIR } from "./schema-parser";
 
 // Surfaces json fields left as `unknown`, `fields` config that targets a
@@ -17,9 +17,10 @@ function collectFieldConfigWarnings(ir: SchemaIR, config: PbkitConfig): string[]
   const untyped: string[] = [];
   const misconfigured: string[] = [];
   const importModules = new Map<string, Set<string>>(); // type name -> modules
+  const isExcluded = createExclusionPredicate(ir.collections, config.collections, config.includeSystem);
 
   for (const col of ir.collections) {
-    if (isCollectionExcluded(col.name, config.collections)) continue;
+    if (isExcluded(col.name)) continue;
     const fieldsByName = new Map(col.fields.map(f => [f.name, f]));
 
     for (const field of col.fields) {
@@ -112,7 +113,11 @@ export async function generateProject(config: PbkitConfig): Promise<GenerateResu
 
   const typesPath = resolve(outDir, "types.gen.ts");
   const typesRel = "./types.gen";
-  const typesContent = generate(ir, { ...config.types, collections: config.collections });
+  const typesContent = generate(ir, {
+    ...config.types,
+    collections: config.collections,
+    includeSystem: config.includeSystem,
+  });
   files.push({ path: typesPath, content: typesContent });
 
   if (config.sdk?.enabled !== false) {
@@ -123,6 +128,7 @@ export async function generateProject(config: PbkitConfig): Promise<GenerateResu
       ...config.sdk,
       typesImport: typesRel,
       collections: config.collections,
+      includeSystem: config.includeSystem,
     });
     files.push({ path: resolve(outDir, "sdk.gen.ts"), content: sdkContent });
   }
@@ -135,6 +141,7 @@ export async function generateProject(config: PbkitConfig): Promise<GenerateResu
         typesImport: typesRel,
         sdkImport: sdkRel,
         collections: config.collections,
+        includeSystem: config.includeSystem,
       });
       for (const pf of pluginFiles) {
         files.push({ path: resolve(outDir, pf.path), content: pf.content });

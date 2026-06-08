@@ -11,6 +11,7 @@ export interface PluginContext {
   typesImport: string;
   sdkImport: string;
   collections?: CollectionsConfig;
+  includeSystem?: boolean;
 }
 
 export interface PbkitPlugin {

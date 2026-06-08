@@ -1,9 +1,9 @@
 import type { SchemaIR, CollectionSchema, CollectionField } from "../schema-parser"
 import { isMultipleField } from "../schema-parser"
 import type { GenerateOptions } from "./types"
-import { isCollectionExcluded, getFieldConfig, type CollectionsConfig } from "../config"
+import { createExclusionPredicate, getFieldConfig, type CollectionsConfig } from "../config"
 
-type InternalOptions = GenerateOptions & { collections?: CollectionsConfig }
+type InternalOptions = GenerateOptions & { collections?: CollectionsConfig; includeSystem?: boolean }
 
 const SYSTEM_SKIP = new Set(["tokenKey"])
 const AUTH_SYSTEM = new Set(["email", "emailVisibility", "verified"])
@@ -232,7 +232,7 @@ export function generate(ir: SchemaIR, options: InternalOptions = {}): string {
   }
   const expandDepth = options.expandDepth ?? 2
 
-  const isExcluded = (name: string) => isCollectionExcluded(name, options.collections)
+  const isExcluded = createExclusionPredicate(ir.collections, options.collections, options.includeSystem)
   const cols = ir.collections.filter(c => !isExcluded(c.name))
 
   const relationsMaps = new Map<string, string>()

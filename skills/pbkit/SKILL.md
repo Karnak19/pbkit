@@ -79,8 +79,10 @@ export default {
     // baseUrl: "https://my-pb.example.com", // sets PocketBase URL in client.gen.ts
   },
 
+  // System collections (_superusers, _mfas, …) are excluded by default
+  includeSystem: false,
+
   collections: {
-    _superusers: { exclude: true },
     logs: { exclude: true },
     articles: { operations: { create: false, delete: false } },
   },
@@ -95,6 +97,10 @@ export default {
 - Authenticated API: `input: { url: "https://my-pb.example.com", token: "admin-token" }`
 - JSON export path: `input: "./pb_schema.json"`
 - Explicit file object: `input: { file: "./pb_schema.json" }`
+
+### System collections
+
+PocketBase system collections (`_superusers`, `_authOrigins`, `_externalAuths`, `_mfas`, `_otps`, …) are **excluded by default** — they generate no types, SDK functions, or plugin output, and are absent from the `CollectionName` union and `RelationsMap`/expand paths. Set the top-level `includeSystem: true` to generate them. A per-collection `exclude: false` does not override this default.
 
 ### Collection Controls
 

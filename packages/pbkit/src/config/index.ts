@@ -29,6 +29,20 @@ export function isCollectionExcluded(name: string, config?: CollectionsConfig): 
   return config?.[name]?.exclude === true
 }
 
+// Builds a name-keyed exclusion predicate that combines the per-collection
+// `exclude` flag with the system-collection default. System collections
+// (`_superusers`, `_mfas`, …) are excluded unless `includeSystem` is set.
+// Precedence: a per-collection `exclude: false` does NOT override the system
+// default — use `includeSystem` to generate system collections.
+export function createExclusionPredicate(
+  collections: ReadonlyArray<{ name: string; system: boolean }>,
+  config?: CollectionsConfig,
+  includeSystem?: boolean,
+): (name: string) => boolean {
+  const systemNames = new Set(collections.filter(c => c.system).map(c => c.name))
+  return name => config?.[name]?.exclude === true || (!includeSystem && systemNames.has(name))
+}
+
 export function isOperationEnabled(
   collectionName: string,
   op: OperationName,

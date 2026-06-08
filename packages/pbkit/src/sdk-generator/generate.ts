@@ -1,6 +1,6 @@
 import type { SchemaIR, CollectionSchema } from "../schema-parser";
 import type { SdkGenerateOptions } from "./types";
-import { isCollectionExcluded, isOperationEnabled, type CollectionsConfig } from "../config";
+import { createExclusionPredicate, isOperationEnabled, type CollectionsConfig } from "../config";
 
 function pascalCase(name: string): string {
   return name
@@ -24,10 +24,10 @@ function singularize(name: string): string {
 function hasRelationsMap(
   col: CollectionSchema,
   ir: SchemaIR,
-  collections?: CollectionsConfig,
+  isExcluded: (name: string) => boolean,
 ): boolean {
   return ir.relations.some(
-    (r) => r.collectionName === col.name && !isCollectionExcluded(r.targetCollectionName, collections),
+    (r) => r.collectionName === col.name && !isExcluded(r.targetCollectionName),
   );
 }
 
@@ -55,6 +55,7 @@ export function generateClientFile(options: SdkGenerateOptions = {}): string {
 function crudFunctions(
   col: CollectionSchema,
   ir: SchemaIR,
+  isExcluded: (name: string) => boolean,
   collections?: CollectionsConfig,
 ): string[] {
   const p = pascalCase(col.name);
@@ -65,7 +66,7 @@ function crudFunctions(
 
   // Collections with forward relations get read functions generic over the
   // requested expand string, so the result carries a typed `.expand`.
-  const rel = hasRelationsMap(col, ir, collections);
+  const rel = hasRelationsMap(col, ir, isExcluded);
   const gen = rel ? "<const S extends string | undefined = undefined>" : "";
   const reqOpt = rel ? `Omit<RequestOptions, "expand"> & { expand?: S }` : "RequestOptions";
   const listOpt = rel ? `Omit<ListParams, "expand"> & { expand?: S }` : "ListParams";
@@ -242,19 +243,20 @@ function authFunctions(col: CollectionSchema): string[] {
 
 export function generateSdk(
   ir: SchemaIR,
-  options: SdkGenerateOptions & { collections?: CollectionsConfig } = {},
+  options: SdkGenerateOptions & { collections?: CollectionsConfig; includeSystem?: boolean } = {},
 ): string {
   const typesImport = options.typesImport ?? "./types.gen";
 
-  const cols = ir.collections.filter((c) => !isCollectionExcluded(c.name, options.collections));
+  const isExcluded = createExclusionPredicate(ir.collections, options.collections, options.includeSystem);
+  const cols = ir.collections.filter((c) => !isExcluded(c.name));
 
   const typeImports = ["ListParams", "RequestOptions", ...cols.flatMap((c) => {
     const p = pascalCase(c.name);
     const imports = [`${p}Record`, `${p}Create`, `${p}Update`];
-    if (hasRelationsMap(c, ir, options.collections)) imports.push(`${p}Relations`);
+    if (hasRelationsMap(c, ir, isExcluded)) imports.push(`${p}Relations`);
     return imports;
   })];
-  if (cols.some((c) => hasRelationsMap(c, ir, options.collections))) {
+  if (cols.some((c) => hasRelationsMap(c, ir, isExcluded))) {
     typeImports.push("BuildExpand", "Split");
   }
 
@@ -282,7 +284,7 @@ export function generateSdk(
     const p = pascalCase(col.name);
     parts.push(`// --- ${p} ---`);
     parts.push("");
-    parts.push(...crudFunctions(col, ir, options.collections));
+    parts.push(...crudFunctions(col, ir, isExcluded, options.collections));
     if (col.type === "auth") {
       parts.push(...authFunctions(col));
     }

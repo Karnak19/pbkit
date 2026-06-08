@@ -1,6 +1,6 @@
 import type { SchemaIR, CollectionSchema } from "@karnak19/pbkit";
 import type { PbkitPlugin, PluginContext, PluginOutputFile } from "@karnak19/pbkit";
-import { isCollectionExcluded, pascalCase } from "@karnak19/pbkit";
+import { createExclusionPredicate, pascalCase } from "@karnak19/pbkit";
 
 function subscribeFunction(col: CollectionSchema): string[] {
   const p = pascalCase(col.name);
@@ -26,7 +26,8 @@ function subscribeFunction(col: CollectionSchema): string[] {
 
 export function generateRealtime(ir: SchemaIR, ctx: PluginContext): string {
   const parts: string[] = [];
-  const cols = ir.collections.filter((c) => !isCollectionExcluded(c.name, ctx.collections));
+  const isExcluded = createExclusionPredicate(ir.collections, ctx.collections, ctx.includeSystem);
+  const cols = ir.collections.filter((c) => !isExcluded(c.name));
 
   const typeImports = cols.map((c) => `${pascalCase(c.name)}Record`).sort();
 

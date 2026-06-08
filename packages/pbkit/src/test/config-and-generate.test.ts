@@ -126,6 +126,57 @@ describe("generateProject", () => {
     expect(sdk).not.toContain("getComment(")
   })
 
+  describe("system collections", () => {
+    const systemFixture = resolve(import.meta.dir, "fixtures", "system-schema.json")
+
+    test("excludes system collections by default", async () => {
+      const outDir = resolve(TMP, "generated-system-default")
+      await generateProject({ input: systemFixture, output: outDir })
+
+      const types = readFileSync(resolve(outDir, "types.gen.ts"), "utf-8")
+      // No types for the system collection...
+      expect(types).not.toContain("SuperusersRecord")
+      expect(types).not.toContain("SuperusersCreate")
+      // ...and it's absent from the CollectionName union.
+      expect(types).toContain('export type CollectionName = "profiles"')
+      // The profiles -> _superusers relation must not produce a dangling ref.
+      expect(types).not.toContain("ProfilesRelations")
+      // The user collection is still generated.
+      expect(types).toContain("ProfilesRecord")
+
+      const sdk = readFileSync(resolve(outDir, "sdk.gen.ts"), "utf-8")
+      expect(sdk).not.toContain("getSuperuser(")
+      expect(sdk).not.toContain("createSuperuser(")
+      expect(sdk).toContain("getProfile(")
+    })
+
+    test("includeSystem: true restores system collections", async () => {
+      const outDir = resolve(TMP, "generated-system-included")
+      await generateProject({ input: systemFixture, output: outDir, includeSystem: true })
+
+      const types = readFileSync(resolve(outDir, "types.gen.ts"), "utf-8")
+      expect(types).toContain("SuperusersRecord")
+      expect(types).toContain("SuperusersCreate")
+      // With the target generated, the profiles relation map now references it.
+      expect(types).toContain("ProfilesRelations")
+
+      const sdk = readFileSync(resolve(outDir, "sdk.gen.ts"), "utf-8")
+      expect(sdk).toContain("createSuperuser(")
+    })
+
+    test("per-collection exclude: false does not override the system default", async () => {
+      const outDir = resolve(TMP, "generated-system-precedence")
+      await generateProject({
+        input: systemFixture,
+        output: outDir,
+        collections: { _superusers: { exclude: false } },
+      })
+
+      const types = readFileSync(resolve(outDir, "types.gen.ts"), "utf-8")
+      expect(types).not.toContain("SuperusersRecord")
+    })
+  })
+
   test("reports duration", async () => {
     const outDir = resolve(TMP, "generated-dur")
     const result = await generateProject({ input: fixturePath, output: outDir })

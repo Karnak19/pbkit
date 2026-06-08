@@ -53,6 +53,8 @@ const relations = extractRelations(collections)
 
 ## Generation
 
+`generate` and `generateSdk` exclude system collections (`_superusers`, `_mfas`, …) by default, just like `generateProject`. Pass `includeSystem: true` in the options object to generate them.
+
 ### Generate types only
 
 ```ts
@@ -63,7 +65,7 @@ const typesCode = generate(ir, {
   nullableFields: false,
   optionalFields: "required-only",
   expandDepth: 2,
-  collections: { _superusers: { exclude: true } },
+  collections: { logs: { exclude: true } },
 })
 ```
 
@@ -78,7 +80,7 @@ const clientCode = generateClientFile({
 const sdkCode = generateSdk(ir, {
   typesImport: "./types.gen",
   pbImport: "pocketbase",
-  collections: { _superusers: { exclude: true } },
+  collections: { logs: { exclude: true } },
 })
 ```
 

@@ -107,6 +107,10 @@ export default {
   input: "./pb_schema.json",
   output: "./src/generated",
 
+  // Generate PocketBase system collections (`_superusers`, `_mfas`, …).
+  // Defaults to `false` — they are skipped by every generator.
+  includeSystem: false,
+
   types: {
     dateStrings: true,
     nullableFields: false,
@@ -122,7 +126,9 @@ export default {
   },
 
   collections: {
-    _superusers: { exclude: true },
+    // System collections are excluded by default; use `includeSystem: true`
+    // to generate them. A per-collection `exclude: false` does NOT override the
+    // system default.
     logs: { exclude: true },
     articles: {
       operations: {

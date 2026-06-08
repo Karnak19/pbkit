@@ -1,0 +1,78 @@
+[
+  {
+    "id": "_pbc_superusers",
+    "name": "_superusers",
+    "type": "auth",
+    "system": true,
+    "fields": [
+      {
+        "id": "text_su_id",
+        "name": "id",
+        "type": "text",
+        "system": true,
+        "required": true,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$"
+      },
+      {
+        "id": "email_su",
+        "name": "email",
+        "type": "email",
+        "system": true,
+        "required": true
+      },
+      {
+        "id": "password_su",
+        "name": "password",
+        "type": "password",
+        "system": true,
+        "required": true,
+        "min": 8
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "id": "_pbc_profiles",
+    "name": "profiles",
+    "type": "base",
+    "system": false,
+    "fields": [
+      {
+        "id": "text_prof_id",
+        "name": "id",
+        "type": "text",
+        "system": true,
+        "required": true,
+        "primaryKey": true,
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$"
+      },
+      {
+        "id": "text_prof_name",
+        "name": "name",
+        "type": "text",
+        "system": false,
+        "required": true,
+        "min": 1,
+        "max": 100
+      },
+      {
+        "id": "relation_prof_owner",
+        "name": "owner",
+        "type": "relation",
+        "system": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pbc_superusers",
+        "cascadeDelete": true
+      }
+    ],
+    "indexes": []
+  }
+]

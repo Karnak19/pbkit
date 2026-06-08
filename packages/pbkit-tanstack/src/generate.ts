@@ -1,6 +1,6 @@
 import type { SchemaIR, CollectionSchema, CollectionsConfig } from "@karnak19/pbkit";
 import type { PbkitPlugin, PluginContext, PluginOutputFile } from "@karnak19/pbkit";
-import { isCollectionExcluded, isOperationEnabled, pascalCase } from "@karnak19/pbkit";
+import { createExclusionPredicate, isOperationEnabled, pascalCase } from "@karnak19/pbkit";
 import type { OperationName } from "@karnak19/pbkit";
 
 // A collection's read functions are generic over the requested expand string
@@ -10,10 +10,10 @@ import type { OperationName } from "@karnak19/pbkit";
 function hasRelations(
   col: CollectionSchema,
   ir: SchemaIR,
-  collections?: CollectionsConfig,
+  isExcluded: (name: string) => boolean,
 ): boolean {
   return ir.relations.some(
-    (r) => r.collectionName === col.name && !isCollectionExcluded(r.targetCollectionName, collections),
+    (r) => r.collectionName === col.name && !isExcluded(r.targetCollectionName),
   );
 }
 
@@ -77,6 +77,7 @@ function queryKeyHelpers(col: CollectionSchema, collections?: CollectionsConfig)
 function queryOptions_(
   col: CollectionSchema,
   ir: SchemaIR,
+  isExcluded: (name: string) => boolean,
   collections?: CollectionsConfig,
 ): string[] {
   const p = pascalCase(col.name);
@@ -88,7 +89,7 @@ function queryOptions_(
 
   // Mirror the SDK read functions: when the collection has relations, the
   // factory is generic over the expand string `S` so `.data.expand` stays typed.
-  const rel = hasRelations(col, ir, collections);
+  const rel = hasRelations(col, ir, isExcluded);
   const gen = rel ? "<const S extends string | undefined = undefined>" : "";
   const reqOpt = rel ? `Omit<RequestOptions, "expand"> & { expand?: S }` : "RequestOptions";
   const listOpt = rel ? `Omit<ListParams, "expand"> & { expand?: S }` : "ListParams";
@@ -181,7 +182,8 @@ export function generateTanstack(
   adapterPackage: string,
 ): string {
   const parts: string[] = [];
-  const cols = ir.collections.filter((c) => !isCollectionExcluded(c.name, ctx.collections));
+  const isExcluded = createExclusionPredicate(ir.collections, ctx.collections, ctx.includeSystem);
+  const cols = ir.collections.filter((c) => !isExcluded(c.name));
 
   const op = (name: string, col: CollectionSchema) =>
     isOperationEnabled(col.name, name as OperationName, ctx.collections);
@@ -251,7 +253,7 @@ export function generateTanstack(
     parts.push(`// --- ${p} ---`);
     parts.push("");
     parts.push(...queryKeyHelpers(col, ctx.collections));
-    parts.push(...queryOptions_(col, ir, ctx.collections));
+    parts.push(...queryOptions_(col, ir, isExcluded, ctx.collections));
     parts.push(...mutationOptions_(col, ctx.collections));
     parts.push("");
   }

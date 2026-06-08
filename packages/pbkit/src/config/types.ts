@@ -16,4 +16,7 @@ export interface PbkitConfig {
   sdk?: SdkGenerateOptions & { enabled?: boolean }
   plugins?: PbkitPlugin[]
   collections?: CollectionsConfig
+  // Generate PocketBase system collections (`_superusers`, `_mfas`, …).
+  // Defaults to `false` — system collections are skipped in all generators.
+  includeSystem?: boolean
 }

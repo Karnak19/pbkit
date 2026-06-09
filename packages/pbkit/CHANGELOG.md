@@ -1,5 +1,26 @@
 # @karnak19/pbkit
 
+## 1.1.0
+
+### Minor Changes
+
+- bbc31a9: Add a `pbkit schema` CLI subcommand for managing PocketBase collection
+  definitions against the admin API. Supports `list`, `get`, `pull`, `apply`,
+  `add-field`, `add-index`, `set-rule`, and `create-view`. Authenticates as a
+  superuser via env vars (`POCKETBASE_URL`, `POCKETBASE_ADMIN_EMAIL`,
+  `POCKETBASE_ADMIN_PASSWORD`, `POCKETBASE_ADMIN_TOKEN`) with fallback to the
+  pbkit config. `pull` produces the same snapshot shape the generator consumes;
+  `apply` is non-destructive by default; partial operations fetch-and-patch so
+  they never clobber unrelated fields, indexes, or rules. Schema-only — record
+  mutation is intentionally out of scope.
+
+### Patch Changes
+
+- 3c7dd9a: Build the CLI on [citty](https://github.com/unjs/citty). Both `pbkit generate`
+  and `pbkit schema` (with its subcommands) now have auto-generated `--help`/usage
+  and consistent flag parsing — short flags like `-c` work everywhere. Existing
+  `generate` behavior is unchanged.
+
 ## 1.0.0
 
 ### Major Changes

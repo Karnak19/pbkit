@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { resolveConfigPath } from "../config/loader"
 import { generateProject } from "../generate"
+import { runSchema } from "./schema"
 import type { PbkitConfig } from "../config/types"
 
 function printHelp() {
@@ -8,12 +9,15 @@ function printHelp() {
 
 Usage:
   pbkit generate [--config <path>] [--watch]
+  pbkit schema <subcommand> [...]
   pbkit --help
 
 Options:
   --config, -c    Path to pbkit.config.ts
   --watch, -w     Watch for changes (API polling or file watching)
   --help, -h      Show this help message
+
+Run 'pbkit schema --help' for schema management commands.
 `)
 }
 
@@ -75,6 +79,12 @@ async function runWatch(config: PbkitConfig) {
 
 async function main() {
   const args = process.argv.slice(2)
+
+  if (args[0] === "schema") {
+    await runSchema(args.slice(1))
+    return
+  }
+
   const { config: configPath, watch, help } = parseArgs(args)
 
   if (help) {

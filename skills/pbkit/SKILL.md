@@ -150,6 +150,28 @@ npx pbkit generate -c ./path/to/pbkit.config.ts
 
 Watch mode polls the schema source and regenerates output when it changes.
 
+### Schema management (`pbkit schema`)
+
+`pbkit schema` manages PocketBase collection definitions directly against the admin API (`/api/collections`). It is schema-only — record create/update/delete is intentionally out of scope.
+
+```bash
+pbkit schema list                         # list collections (name + type)
+pbkit schema get posts                    # dump one collection as JSON
+pbkit schema pull --out pb-schema.json    # download the snapshot the generator reads
+pbkit schema apply pb-schema.json         # import definitions (non-destructive)
+pbkit schema add-field posts '{"name":"slug","type":"text"}'
+pbkit schema add-index posts "CREATE UNIQUE INDEX idx_slug ON posts (slug)"
+pbkit schema set-rule posts --list "@request.auth.id != ''" --create "@request.auth.id != ''"
+pbkit schema create-view active_users --query "SELECT id FROM users WHERE verified = true"
+```
+
+Auth is via superuser credentials from the environment (preferred) with config fallback, never inline: `POCKETBASE_URL`, `POCKETBASE_ADMIN_EMAIL`, `POCKETBASE_ADMIN_PASSWORD`, or `POCKETBASE_ADMIN_TOKEN`.
+
+- `pull` produces the same shape `pbkit generate` consumes — snapshot a live instance, then generate off the file.
+- `apply` is non-destructive by default (`deleteMissing: false`); pass `--delete-missing` to mirror the file exactly.
+- `add-field`, `add-index`, and `set-rule` fetch the current collection and patch it, so they never clobber unrelated fields, indexes, or rules.
+- For `set-rule`, a rule value of `"null"` makes the rule superuser-only and `""` makes it public.
+
 ## Client Singleton
 
 pbkit generates a default PocketBase client in `client.gen.ts`:

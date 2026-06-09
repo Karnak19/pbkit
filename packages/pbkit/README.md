@@ -53,6 +53,46 @@ bunx pbkit generate
 This writes generated files to your configured output directory. Generated files
 use the `.gen.ts` suffix and should not be edited by hand.
 
+## Manage Schema
+
+The `pbkit schema` subcommand manages collection definitions directly against
+the PocketBase admin API, so schema changes don't require hand-rolled `curl`
+calls. It is schema-only — record CRUD is intentionally out of scope.
+
+```bash
+pbkit schema list                       # list all collections (name + type)
+pbkit schema get posts                  # dump one collection as JSON
+pbkit schema pull --out pb-schema.json  # download the full snapshot the generator reads
+pbkit schema apply pb-schema.json       # import definitions (non-destructive)
+pbkit schema add-field posts '{"name":"slug","type":"text"}'
+pbkit schema add-index posts "CREATE UNIQUE INDEX idx_slug ON posts (slug)"
+pbkit schema set-rule posts --list "@request.auth.id != ''" --create "@request.auth.id != ''"
+pbkit schema create-view active_users --query "SELECT id FROM users WHERE verified = true"
+```
+
+`pull` produces exactly the shape `pbkit generate` consumes, so you can pull a
+snapshot and generate types off it. `apply` uses `deleteMissing: false` by
+default — pass `--delete-missing` to remove collections absent from the file.
+Partial operations (`add-field`, `add-index`, `set-rule`) fetch the current
+collection and patch it, so they never clobber unrelated fields, indexes, or
+rules.
+
+For `set-rule`, a rule value of `"null"` makes the rule superuser-only and `""`
+makes it public.
+
+### Authentication
+
+Schema commands authenticate as a superuser. Credentials are read from the
+environment (preferred) and fall back to your `pbkit.config.ts` API input —
+they are never passed inline:
+
+| Variable                     | Purpose                                            |
+| ---------------------------- | -------------------------------------------------- |
+| `POCKETBASE_URL`             | PocketBase base URL                                |
+| `POCKETBASE_ADMIN_EMAIL`     | Superuser email (used with the password)           |
+| `POCKETBASE_ADMIN_PASSWORD`  | Superuser password                                 |
+| `POCKETBASE_ADMIN_TOKEN`     | Pre-issued admin token (alternative to email/pass) |
+
 ## Use The SDK
 
 ```ts

@@ -48,8 +48,13 @@ async function loadConfigOptional(configPath?: string): Promise<PbkitConfig | un
   }
 }
 
-/** Extract `--flag value` pairs and the leading positional args. */
-function splitArgs(args: string[]): {
+/** Recognize `--long` and single-char `-x` flags (not negative-looking values). */
+function isFlag(arg: string): boolean {
+  return arg.startsWith("--") || (arg.startsWith("-") && arg.length === 2)
+}
+
+/** Extract `--flag value` / `-f value` pairs and the leading positional args. */
+export function splitArgs(args: string[]): {
   positionals: string[]
   flags: Map<string, string | true>
 } {
@@ -57,10 +62,10 @@ function splitArgs(args: string[]): {
   const flags = new Map<string, string | true>()
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
-    if (arg.startsWith("--")) {
-      const key = arg.slice(2)
+    if (isFlag(arg)) {
+      const key = arg.startsWith("--") ? arg.slice(2) : arg.slice(1)
       const next = args[i + 1]
-      if (next === undefined || next.startsWith("--")) {
+      if (next === undefined || isFlag(next)) {
         flags.set(key, true)
       } else {
         flags.set(key, next)

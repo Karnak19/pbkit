@@ -186,6 +186,17 @@ export async function createSchemaClient(
 ): Promise<SchemaClient> {
   const auth = resolveAuthSettings(config)
 
+  if (auth.email && !auth.password) {
+    throw new Error(
+      "POCKETBASE_ADMIN_EMAIL is set but POCKETBASE_ADMIN_PASSWORD is missing — both are required for email/password auth.",
+    )
+  }
+  if (!auth.email && auth.password) {
+    throw new Error(
+      "POCKETBASE_ADMIN_PASSWORD is set but POCKETBASE_ADMIN_EMAIL is missing — both are required for email/password auth.",
+    )
+  }
+
   let token = auth.token
   if (auth.email && auth.password) {
     token = await superuserAuth(auth.baseUrl, auth.email, auth.password, fetchImpl)

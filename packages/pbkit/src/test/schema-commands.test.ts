@@ -1,5 +1,6 @@
 import { describe, test, expect } from "bun:test"
-import { SchemaClient, resolveAuthSettings } from "../schema/client"
+import { SchemaClient, createSchemaClient, resolveAuthSettings } from "../schema/client"
+import { splitArgs } from "../cli/schema"
 import {
   addFieldCommand,
   addIndexCommand,
@@ -163,5 +164,40 @@ describe("resolveAuthSettings", () => {
     withEnv({}, () => {
       expect(() => resolveAuthSettings(undefined)).toThrow("No PocketBase URL")
     })
+  })
+
+  test("rejects a partial email/password pair instead of falling through", async () => {
+    const config: PbkitConfig = { input: { url: "http://x" }, output: "./gen" }
+    await withEnv({ POCKETBASE_ADMIN_EMAIL: "admin@example.com" }, async () => {
+      await expect(createSchemaClient(config)).rejects.toThrow(
+        "POCKETBASE_ADMIN_PASSWORD is missing",
+      )
+    })
+    await withEnv({ POCKETBASE_ADMIN_PASSWORD: "secret" }, async () => {
+      await expect(createSchemaClient(config)).rejects.toThrow(
+        "POCKETBASE_ADMIN_EMAIL is missing",
+      )
+    })
+  })
+})
+
+describe("splitArgs", () => {
+  test("parses single-dash short flags with a value", () => {
+    const { positionals, flags } = splitArgs(["-c", "./my-config.ts"])
+    expect(positionals).toEqual([])
+    expect(flags.get("c")).toBe("./my-config.ts")
+  })
+
+  test("parses long flags and positionals together", () => {
+    const { positionals, flags } = splitArgs(["posts", "--out", "snap.json", "--delete-missing"])
+    expect(positionals).toEqual(["posts"])
+    expect(flags.get("out")).toBe("snap.json")
+    expect(flags.get("delete-missing")).toBe(true)
+  })
+
+  test("treats a following flag as a boolean, not a value", () => {
+    const { flags } = splitArgs(["--delete-missing", "-c", "cfg.ts"])
+    expect(flags.get("delete-missing")).toBe(true)
+    expect(flags.get("c")).toBe("cfg.ts")
   })
 })

@@ -1,49 +1,10 @@
 #!/usr/bin/env bun
+import { defineCommand, runMain } from "citty"
+import { action } from "./action"
 import { resolveConfigPath } from "../config/loader"
 import { generateProject } from "../generate"
-import { runSchema } from "./schema"
+import { schemaCommand } from "./schema"
 import type { PbkitConfig } from "../config/types"
-
-function printHelp() {
-  console.log(`pbkit — PocketBase code generation toolkit
-
-Usage:
-  pbkit generate [--config <path>] [--watch]
-  pbkit schema <subcommand> [...]
-  pbkit --help
-
-Options:
-  --config, -c    Path to pbkit.config.ts
-  --watch, -w     Watch for changes (API polling or file watching)
-  --help, -h      Show this help message
-
-Run 'pbkit schema --help' for schema management commands.
-`)
-}
-
-function parseArgs(args: string[]): { config?: string; watch: boolean; help: boolean } {
-  let config: string | undefined
-  let watch = false
-  let help = false
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i]
-    if (arg === "--help" || arg === "-h") {
-      help = true
-    } else if (arg === "--config" || arg === "-c") {
-      config = args[++i]
-    } else if (arg === "--watch" || arg === "-w") {
-      watch = true
-    } else if (arg === "generate") {
-      // default command
-    } else {
-      console.error(`Unknown argument: ${arg}`)
-      process.exit(1)
-    }
-  }
-
-  return { config, watch, help }
-}
 
 async function runGenerate(config: PbkitConfig) {
   const result = await generateProject(config)
@@ -77,31 +38,32 @@ async function runWatch(config: PbkitConfig) {
   setInterval(regenerate, 10_000)
 }
 
-async function main() {
-  const args = process.argv.slice(2)
+const generateArgs = {
+  config: { type: "string", alias: "c", description: "Path to pbkit.config.ts" },
+  watch: { type: "boolean", alias: "w", description: "Watch for changes and regenerate" },
+} as const
 
-  if (args[0] === "schema") {
-    await runSchema(args.slice(1))
-    return
-  }
-
-  const { config: configPath, watch, help } = parseArgs(args)
-
-  if (help) {
-    printHelp()
-    process.exit(0)
-  }
-
-  const config = await resolveConfigPath(configPath)
-
-  if (watch) {
+async function doGenerate(args: { config?: string; watch?: boolean }) {
+  const config = await resolveConfigPath(args.config)
+  if (args.watch) {
     await runWatch(config)
   } else {
     await runGenerate(config)
   }
 }
 
-main().catch((err) => {
-  console.error(err instanceof Error ? err.message : err)
-  process.exit(1)
+const generate = defineCommand({
+  meta: { name: "generate", description: "Generate types and SDK from your pbkit.config.ts" },
+  args: { ...generateArgs },
+  run: action(({ args }) => doGenerate(args)),
 })
+
+const main = defineCommand({
+  meta: { name: "pbkit", description: "PocketBase code generation toolkit" },
+  args: { ...generateArgs },
+  subCommands: { generate, schema: schemaCommand },
+  // Bare `pbkit` (with optional flags) runs generate.
+  run: action(({ args }) => doGenerate(args)),
+})
+
+runMain(main)

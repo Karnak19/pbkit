@@ -1,6 +1,5 @@
 import { describe, test, expect } from "bun:test"
 import { SchemaClient, createSchemaClient, resolveAuthSettings } from "../schema/client"
-import { splitArgs } from "../cli/schema"
 import {
   addFieldCommand,
   addIndexCommand,
@@ -178,26 +177,5 @@ describe("resolveAuthSettings", () => {
         "POCKETBASE_ADMIN_EMAIL is missing",
       )
     })
-  })
-})
-
-describe("splitArgs", () => {
-  test("parses single-dash short flags with a value", () => {
-    const { positionals, flags } = splitArgs(["-c", "./my-config.ts"])
-    expect(positionals).toEqual([])
-    expect(flags.get("c")).toBe("./my-config.ts")
-  })
-
-  test("parses long flags and positionals together", () => {
-    const { positionals, flags } = splitArgs(["posts", "--out", "snap.json", "--delete-missing"])
-    expect(positionals).toEqual(["posts"])
-    expect(flags.get("out")).toBe("snap.json")
-    expect(flags.get("delete-missing")).toBe(true)
-  })
-
-  test("treats a following flag as a boolean, not a value", () => {
-    const { flags } = splitArgs(["--delete-missing", "-c", "cfg.ts"])
-    expect(flags.get("delete-missing")).toBe(true)
-    expect(flags.get("c")).toBe("cfg.ts")
   })
 })

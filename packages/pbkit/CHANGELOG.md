@@ -1,5 +1,11 @@
 # @karnak19/pbkit
 
+## 1.1.1
+
+### Patch Changes
+
+- c2618cc: Make `redirectUrl` optional in generated `auth*WithOAuth2` functions, matching PocketBase v0.39.4 which dropped the required `redirectURL` validator from `authWithOAuth2Code()`.
+
 ## 1.1.0
 
 ### Minor Changes

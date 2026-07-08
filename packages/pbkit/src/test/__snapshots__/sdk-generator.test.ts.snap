@@ -62,7 +62,7 @@ export async function authUserWithPassword(usernameOrEmail: string, password: st
   return result.record as unknown as UsersRecord
 }
 
-export async function authUserWithOAuth2(provider: string, code: string, codeVerifier: string, redirectUrl: string, opts?: { client?: PbClient }): Promise<UsersRecord> {
+export async function authUserWithOAuth2(provider: string, code: string, codeVerifier: string, redirectUrl = "", opts?: { client?: PbClient }): Promise<UsersRecord> {
   const pb = opts?.client ?? client
   const result = await pb.collection("users").authWithOAuth2Code(provider, code, codeVerifier, redirectUrl)
   return result.record as unknown as UsersRecord

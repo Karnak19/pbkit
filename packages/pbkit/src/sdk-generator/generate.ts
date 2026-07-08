@@ -164,7 +164,7 @@ function authFunctions(col: CollectionSchema): string[] {
   lines.push("}");
   lines.push("");
   lines.push(
-    `export async function auth${s}WithOAuth2(provider: string, code: string, codeVerifier: string, redirectUrl: string, opts?: { client?: PbClient }): Promise<${p}Record> {`,
+    `export async function auth${s}WithOAuth2(provider: string, code: string, codeVerifier: string, redirectUrl = "", opts?: { client?: PbClient }): Promise<${p}Record> {`,
   );
   lines.push("  const pb = opts?.client ?? client");
   lines.push(

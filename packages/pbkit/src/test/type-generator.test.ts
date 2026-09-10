@@ -292,12 +292,28 @@ describe("generate", () => {
     const output = generate(ir)
     expect(output).toContain("export type ArticlesExpand")
     expect(output).toContain("export type CommentsExpand")
+    // #40: collections without forward relations still get Expand via back-relations
+    expect(output).toContain("export type UsersExpand")
+    expect(output).toContain("export type CategoriesExpand")
   })
 
-  test("skips Expand type for collections without relations", () => {
-    const output = generate(ir)
-    expect(output).not.toContain("CategoriesExpand")
-    expect(output).not.toContain("UsersExpand")
+  test("skips Expand type for collections without any forward or back relations", () => {
+    const isolated = parseJson([
+      {
+        id: "c_iso",
+        name: "isolated",
+        type: "base",
+        system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "title", type: "text", system: false, required: true },
+        ],
+        indexes: [],
+      },
+    ])
+    const output = generate(isolated)
+    expect(output).not.toContain("IsolatedExpand")
+    expect(output).not.toContain("IsolatedRelations")
   })
 
   test("includes flat expand paths", () => {
@@ -342,16 +358,62 @@ describe("generate", () => {
     expect(output).toContain('categories: { rec: CategoriesRecord; coll: "categories"; multi: true }')
   })
 
-  test("skips relations map for collections without forward relations", () => {
+  test("generates back-relations as multi:true entries named {source}_via_{field} (#40)", () => {
     const output = generate(ir)
-    expect(output).not.toContain("CategoriesRelations")
-    expect(output).not.toContain("UsersRelations")
+    expect(output).toContain("export type UsersRelations = {")
+    expect(output).toContain('articles_via_author: { rec: ArticlesRecord; coll: "articles"; multi: true }')
+    expect(output).toContain('comments_via_author: { rec: CommentsRecord; coll: "comments"; multi: true }')
+    expect(output).toContain('articles_via_categories: { rec: ArticlesRecord; coll: "articles"; multi: true }')
+    expect(output).toContain('comments_via_article: { rec: CommentsRecord; coll: "comments"; multi: true }')
+  })
+
+  test("includes back-relations in Expand unions, incl. nested paths (#40)", () => {
+    const output = generate(ir)
+    const usersExpand = output.match(/export type UsersExpand = (.+)/)?.[1]
+    expect(usersExpand).toContain('"articles_via_author"')
+    expect(usersExpand).toContain('"comments_via_author"')
+    expect(usersExpand).toContain('"articles_via_author.author"')
+    const articlesExpand = output.match(/export type ArticlesExpand = (.+)/)?.[1]
+    expect(articlesExpand).toContain('"comments_via_article"')
+    expect(articlesExpand).toContain('"comments_via_article.article"')
+    expect(articlesExpand).toContain('"author.articles_via_author"')
+    expect(articlesExpand).toContain('"categories.articles_via_categories"')
+  })
+
+  test("omits back-relations whose source collection is excluded (#40)", () => {
+    const output = generate(ir, { collections: { articles: { exclude: true } } })
+    // users.articles_via_author -> articles (excluded): gone from both representations
+    expect(output).not.toContain("articles_via_author")
+    // comments has no back-relations in the fixture; its forward article path is
+    // gone too, but its author path survives
+    const commentsExpand = output.match(/export type CommentsExpand = (.+)/)?.[1]
+    expect(commentsExpand).not.toContain('"article"')
+    expect(commentsExpand).toContain('"author"')
+  })
+
+  test("skips relations map for collections without forward or back relations", () => {
+    const isolated = parseJson([
+      {
+        id: "c_iso",
+        name: "isolated",
+        type: "base",
+        system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "title", type: "text", system: false, required: true },
+        ],
+        indexes: [],
+      },
+    ])
+    const output = generate(isolated)
+    expect(output).not.toContain("IsolatedRelations")
   })
 
   test("emits the global RelationsMap and expand helpers once", () => {
     const output = generate(ir)
     expect(output).toContain("type RelationsMap = {")
-    expect(output).toContain('"users": {}')
+    expect(output).toContain('"users": UsersRelations')
+    expect(output).toContain('"categories": CategoriesRelations')
     expect(output).toContain('"articles": ArticlesRelations')
     expect(output).toContain("export type BuildExpand<R, P extends string>")
     expect(output).toContain("type Split<S extends string>")

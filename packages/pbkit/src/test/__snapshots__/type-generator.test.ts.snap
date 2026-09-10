@@ -56,6 +56,13 @@ export type UsersUpdate = Partial<UsersCreate> & {
   oldPassword?: string
 }
 
+export type UsersExpand = "articles_via_author" | "articles_via_author.author" | "articles_via_author.categories" | "articles_via_author.comments_via_article" | "comments_via_author" | "comments_via_author.article" | "comments_via_author.author"
+
+export type UsersRelations = {
+  articles_via_author: { rec: ArticlesRecord; coll: "articles"; multi: true }
+  comments_via_author: { rec: CommentsRecord; coll: "comments"; multi: true }
+}
+
 // Categories
 
 export type CategoriesRecord = BaseRecord & {
@@ -69,6 +76,12 @@ export type CategoriesCreate = {
 }
 
 export type CategoriesUpdate = Partial<CategoriesCreate>
+
+export type CategoriesExpand = "articles_via_categories" | "articles_via_categories.author" | "articles_via_categories.categories" | "articles_via_categories.comments_via_article"
+
+export type CategoriesRelations = {
+  articles_via_categories: { rec: ArticlesRecord; coll: "articles"; multi: true }
+}
 
 // Articles
 
@@ -113,11 +126,12 @@ export type ArticlesUpdate = Partial<ArticlesCreate> & {
   "attachments-"?: string | string[]
 }
 
-export type ArticlesExpand = "author" | "categories"
+export type ArticlesExpand = "author" | "author.articles_via_author" | "author.comments_via_author" | "categories" | "categories.articles_via_categories" | "comments_via_article" | "comments_via_article.article" | "comments_via_article.author"
 
 export type ArticlesRelations = {
   author: { rec: UsersRecord; coll: "users"; multi: false }
   categories: { rec: CategoriesRecord; coll: "categories"; multi: true }
+  comments_via_article: { rec: CommentsRecord; coll: "comments"; multi: true }
 }
 
 // Comments
@@ -136,7 +150,7 @@ export type CommentsCreate = {
 
 export type CommentsUpdate = Partial<CommentsCreate>
 
-export type CommentsExpand = "article" | "article.author" | "article.categories" | "author"
+export type CommentsExpand = "article" | "article.author" | "article.categories" | "article.comments_via_article" | "author" | "author.articles_via_author" | "author.comments_via_author"
 
 export type CommentsRelations = {
   article: { rec: ArticlesRecord; coll: "articles"; multi: false }
@@ -144,8 +158,8 @@ export type CommentsRelations = {
 }
 
 type RelationsMap = {
-  "users": {}
-  "categories": {}
+  "users": UsersRelations
+  "categories": CategoriesRelations
   "articles": ArticlesRelations
   "comments": CommentsRelations
 }

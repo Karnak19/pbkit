@@ -56,14 +56,14 @@ describe("generateTanstack", () => {
   });
 
   test("generates query options for each collection", () => {
-    // Collections without relations stay non-generic.
-    expect(output).toContain("export function userOptions(");
-    expect(output).toContain("export function getFirstUserOptions(");
-    expect(output).toContain("export function usersOptions(");
-    expect(output).toContain("export function fullListUsersOptions(");
-    expect(output).toContain("export function categoryOptions(");
-    expect(output).toContain("export function getFirstCategoryOptions(");
-    expect(output).toContain("export function categoriesOptions(");
+    // Every collection has forward or back relations, so all are generic.
+    expect(output).toContain("export function userOptions<const S");
+    expect(output).toContain("export function getFirstUserOptions<const S");
+    expect(output).toContain("export function usersOptions<const S");
+    expect(output).toContain("export function fullListUsersOptions<const S");
+    expect(output).toContain("export function categoryOptions<const S");
+    expect(output).toContain("export function getFirstCategoryOptions<const S");
+    expect(output).toContain("export function categoriesOptions<const S");
     // Collections with relations are generic over the expand string.
     expect(output).toContain("export function articleOptions<const S");
     expect(output).toContain("export function getFirstArticleOptions<const S");
@@ -75,7 +75,7 @@ describe("generateTanstack", () => {
   });
 
   test("query options accept a client override symmetric with mutations", () => {
-    expect(output).toContain("export function userOptions(id: string, options?: RequestOptions, opts?: { client?: PbClient })");
+    expect(output).toContain("export function userOptions<const S");
     expect(output).toContain('queryFn: () => getUser(id, options, opts)');
     expect(output).toContain('queryFn: () => listUsers(params, opts)');
   });

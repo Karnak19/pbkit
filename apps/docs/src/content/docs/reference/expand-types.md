@@ -7,7 +7,10 @@ sidebar:
 
 For each collection that has relation fields, pbkit generates an `XxxExpand`
 type: a union of every valid `expand` path, and an `XxxRelations` map that drives
-the typed `.expand` shape on read results.
+the typed `.expand` shape on read results. This includes reverse (`_via_`)
+back-relations: for every relation field `B.x` pointing at `A`, collection `A`
+can expand `{B}_via_{x}` into an array of `B` records, and those paths nest like
+forward ones (up to `expandDepth`).
 
 For the concept behind how these paths are computed, see
 [Relations and expand paths](/explanation/relations-and-expand).
@@ -27,25 +30,31 @@ export type CommentsExpand = "article" | "article.author" | "article.categories"
 ```
 
 An `XxxExpand` type is only generated when the collection has at least one
-relation field.
+forward or back relation.
 
 ## Relations map
 
 Alongside `XxxExpand`, pbkit emits an `XxxRelations` map describing each forward
-relation's target record type and cardinality. The SDK uses this (with a small
-set of shared helper types — `BuildExpand`, `Split`) to compute the typed
-`.expand` result from the requested expand string:
+relation's target record type and cardinality, plus each reverse (`_via_`)
+back-relation. The SDK uses this (with a small set of shared helper types —
+`BuildExpand`, `Split`) to compute the typed `.expand` result from the
+requested expand string:
 
 ```ts
 export type ArticlesRelations = {
   author: { rec: UsersRecord; coll: "users"; multi: false }
   categories: { rec: CategoriesRecord; coll: "categories"; multi: true }
+  comments_via_article: { rec: CommentsRecord; coll: "comments"; multi: true }
 }
 ```
 
 `multi: true` (the relation's `maxSelect > 1`) means the expanded value is an
-array. You normally don't reference these directly — they exist so
-`getArticle(id, { expand: "author" }).expand?.author` is typed as `UsersRecord`.
+array. Back-relations (`{sourceCollection}_via_{field}`, following PocketBase's
+convention) are always `multi: true` — a back-relation resolves to an array of
+records. You normally don't reference these directly — they exist so
+`getArticle(id, { expand: "author" }).expand?.author` is typed as `UsersRecord`
+and `getUser(id, { expand: "articles_via_author" }).expand?.articles_via_author`
+is typed as `ArticlesRecord[]`.
 See [Generated SDK → Typed expand](/reference/generated-sdk#typed-expand).
 
 ## Depth

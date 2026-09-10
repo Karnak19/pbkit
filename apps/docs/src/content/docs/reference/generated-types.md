@@ -65,7 +65,7 @@ export type ArticlesUpdate = Partial<ArticlesCreate>
 
 ### `XxxExpand`
 
-A union of valid expand paths for the collection (only generated if the collection has relations).
+A union of valid expand paths for the collection (only generated if the collection has forward or back relations). Back-relations use PocketBase's `{source}_via_{field}` convention and nest like forward paths.
 
 ```ts
 export type ArticlesExpand = "author" | "categories"

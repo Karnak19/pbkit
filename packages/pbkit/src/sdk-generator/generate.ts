@@ -17,7 +17,8 @@ function singularize(name: string): string {
 }
 
 // A collection has a typed relations map (and thus a typed `.expand` result)
-// when it has at least one forward relation whose target is generated. The
+// when it has at least one forward relation whose target is generated, or at
+// least one reverse (`_via_`) relation whose source is generated. The
 // exclusion filter must match the type generator's `relationsMapType`, or the
 // SDK would reference an `XxxRelations`/`BuildExpand`/`Split` that types.gen.ts
 // never emitted.
@@ -27,7 +28,9 @@ function hasRelationsMap(
   isExcluded: (name: string) => boolean,
 ): boolean {
   return ir.relations.some(
-    (r) => r.collectionName === col.name && !isExcluded(r.targetCollectionName),
+    (r) =>
+      (r.collectionName === col.name && !isExcluded(r.targetCollectionName)) ||
+      (r.targetCollectionName === col.name && !isExcluded(r.collectionName)),
   );
 }
 

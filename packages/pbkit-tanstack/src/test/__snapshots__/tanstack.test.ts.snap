@@ -25,28 +25,28 @@ export function fullListUsersQueryKey(params?: ListParams) {
   return ["users", "full", params] as const
 }
 
-export function userOptions(id: string, options?: RequestOptions, opts?: { client?: PbClient }) {
+export function userOptions<const S extends string | undefined = undefined>(id: string, options?: Omit<RequestOptions, "expand"> & { expand?: S }, opts?: { client?: PbClient }) {
   return queryOptions({
     queryKey: ["users", id, options],
     queryFn: () => getUser(id, options, opts),
   })
 }
 
-export function getFirstUserOptions(filter: string, options?: RequestOptions, opts?: { client?: PbClient }) {
+export function getFirstUserOptions<const S extends string | undefined = undefined>(filter: string, options?: Omit<RequestOptions, "expand"> & { expand?: S }, opts?: { client?: PbClient }) {
   return queryOptions({
     queryKey: ["users", "first", filter, options],
     queryFn: () => getFirstUser(filter, options, opts),
   })
 }
 
-export function usersOptions(params?: ListParams, opts?: { client?: PbClient }) {
+export function usersOptions<const S extends string | undefined = undefined>(params?: Omit<ListParams, "expand"> & { expand?: S }, opts?: { client?: PbClient }) {
   return queryOptions({
     queryKey: ["users", params],
     queryFn: () => listUsers(params, opts),
   })
 }
 
-export function fullListUsersOptions(params?: ListParams, opts?: { client?: PbClient }) {
+export function fullListUsersOptions<const S extends string | undefined = undefined>(params?: Omit<ListParams, "expand"> & { expand?: S }, opts?: { client?: PbClient }) {
   return queryOptions({
     queryKey: ["users", "full", params],
     queryFn: () => getFullListUsers(params, opts),
@@ -88,28 +88,28 @@ export function fullListCategoriesQueryKey(params?: ListParams) {
   return ["categories", "full", params] as const
 }
 
-export function categoryOptions(id: string, options?: RequestOptions, opts?: { client?: PbClient }) {
+export function categoryOptions<const S extends string | undefined = undefined>(id: string, options?: Omit<RequestOptions, "expand"> & { expand?: S }, opts?: { client?: PbClient }) {
   return queryOptions({
     queryKey: ["categories", id, options],
     queryFn: () => getCategory(id, options, opts),
   })
 }
 
-export function getFirstCategoryOptions(filter: string, options?: RequestOptions, opts?: { client?: PbClient }) {
+export function getFirstCategoryOptions<const S extends string | undefined = undefined>(filter: string, options?: Omit<RequestOptions, "expand"> & { expand?: S }, opts?: { client?: PbClient }) {
   return queryOptions({
     queryKey: ["categories", "first", filter, options],
     queryFn: () => getFirstCategory(filter, options, opts),
   })
 }
 
-export function categoriesOptions(params?: ListParams, opts?: { client?: PbClient }) {
+export function categoriesOptions<const S extends string | undefined = undefined>(params?: Omit<ListParams, "expand"> & { expand?: S }, opts?: { client?: PbClient }) {
   return queryOptions({
     queryKey: ["categories", params],
     queryFn: () => listCategories(params, opts),
   })
 }
 
-export function fullListCategoriesOptions(params?: ListParams, opts?: { client?: PbClient }) {
+export function fullListCategoriesOptions<const S extends string | undefined = undefined>(params?: Omit<ListParams, "expand"> & { expand?: S }, opts?: { client?: PbClient }) {
   return queryOptions({
     queryKey: ["categories", "full", params],
     queryFn: () => getFullListCategories(params, opts),

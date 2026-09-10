@@ -292,12 +292,28 @@ describe("generate", () => {
     const output = generate(ir)
     expect(output).toContain("export type ArticlesExpand")
     expect(output).toContain("export type CommentsExpand")
+    // #40: collections without forward relations still get Expand via back-relations
+    expect(output).toContain("export type UsersExpand")
+    expect(output).toContain("export type CategoriesExpand")
   })
 
-  test("skips Expand type for collections without relations", () => {
-    const output = generate(ir)
-    expect(output).not.toContain("CategoriesExpand")
-    expect(output).not.toContain("UsersExpand")
+  test("skips Expand type for collections without any forward or back relations", () => {
+    const isolated = parseJson([
+      {
+        id: "c_iso",
+        name: "isolated",
+        type: "base",
+        system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "title", type: "text", system: false, required: true },
+        ],
+        indexes: [],
+      },
+    ])
+    const output = generate(isolated)
+    expect(output).not.toContain("IsolatedExpand")
+    expect(output).not.toContain("IsolatedRelations")
   })
 
   test("includes flat expand paths", () => {
@@ -342,16 +358,127 @@ describe("generate", () => {
     expect(output).toContain('categories: { rec: CategoriesRecord; coll: "categories"; multi: true }')
   })
 
-  test("skips relations map for collections without forward relations", () => {
+  test("generates back-relations as multi entries named {source}_via_{field} (#40)", () => {
     const output = generate(ir)
-    expect(output).not.toContain("CategoriesRelations")
-    expect(output).not.toContain("UsersRelations")
+    expect(output).toContain("export type UsersRelations = {")
+    expect(output).toContain('articles_via_author: { rec: ArticlesRecord; coll: "articles"; multi: true }')
+    expect(output).toContain('comments_via_author: { rec: CommentsRecord; coll: "comments"; multi: true }')
+    expect(output).toContain('articles_via_categories: { rec: ArticlesRecord; coll: "articles"; multi: true }')
+    expect(output).toContain('comments_via_article: { rec: CommentsRecord; coll: "comments"; multi: true }')
+  })
+
+  test("back-relation over a single-column UNIQUE index resolves to a single record (#40)", () => {
+    // Mirrors PocketBase's expandRecords: the dynamic back-relation is multiple
+    // unless the source's relation field carries a single-column UNIQUE index —
+    // independent of the source field's own maxSelect.
+    const oneToOne = parseJson([
+      {
+        id: "c_users", name: "users", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+        ],
+        indexes: [],
+      },
+      {
+        id: "c_profiles", name: "profiles", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "user", type: "relation", system: false, required: true, maxSelect: 1, collectionId: "c_users" },
+        ],
+        indexes: ["CREATE UNIQUE INDEX idx_profiles_user ON profiles (user)"],
+      },
+      {
+        id: "c_avatars", name: "avatars", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "user", type: "relation", system: false, required: false, maxSelect: 1, collectionId: "c_users" },
+        ],
+        // multi-column unique index: still an array
+        indexes: ["CREATE UNIQUE INDEX idx_avatars_user_kind ON avatars (user, kind)"],
+      },
+    ])
+    const output = generate(oneToOne)
+    expect(output).toContain('profiles_via_user: { rec: ProfilesRecord; coll: "profiles"; multi: false }')
+    expect(output).toContain('avatars_via_user: { rec: AvatarsRecord; coll: "avatars"; multi: true }')
+    const usersExpand = output.match(/export type UsersExpand = (.+)/)?.[1]
+    expect(usersExpand).toContain('"profiles_via_user"')
+    expect(usersExpand).toContain('"avatars_via_user"')
+  })
+
+  test("on a forward/back key collision the back-relation wins (matches PB runtime) (#40)", () => {
+    const colliding = parseJson([
+      {
+        id: "c_a", name: "alpha", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          // pathological: forward field literally named like alpha's back-relation
+          { id: "f2", name: "beta_via_link", type: "relation", system: false, required: false, maxSelect: 1, collectionId: "c_b" },
+        ],
+        indexes: [],
+      },
+      {
+        id: "c_b", name: "beta", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "link", type: "relation", system: false, required: false, maxSelect: 1, collectionId: "c_a" },
+        ],
+        indexes: [],
+      },
+    ])
+    const output = generate(colliding)
+    // the shared key resolves to the back-relation (array of beta), not the
+    // forward field — same precedence as PocketBase's expandRecords
+    expect(output).toContain('beta_via_link: { rec: BetaRecord; coll: "beta"; multi: true }')
+    expect(output).not.toContain('beta_via_link: { rec: BetaRecord; coll: "beta"; multi: false }')
+  })
+
+  test("includes back-relations in Expand unions, incl. nested paths (#40)", () => {
+    const output = generate(ir)
+    const usersExpand = output.match(/export type UsersExpand = (.+)/)?.[1]
+    expect(usersExpand).toContain('"articles_via_author"')
+    expect(usersExpand).toContain('"comments_via_author"')
+    expect(usersExpand).toContain('"articles_via_author.author"')
+    const articlesExpand = output.match(/export type ArticlesExpand = (.+)/)?.[1]
+    expect(articlesExpand).toContain('"comments_via_article"')
+    expect(articlesExpand).toContain('"comments_via_article.article"')
+    expect(articlesExpand).toContain('"author.articles_via_author"')
+    expect(articlesExpand).toContain('"categories.articles_via_categories"')
+  })
+
+  test("omits back-relations whose source collection is excluded (#40)", () => {
+    const output = generate(ir, { collections: { articles: { exclude: true } } })
+    // users.articles_via_author -> articles (excluded): gone from both representations
+    expect(output).not.toContain("articles_via_author")
+    // comments has no back-relations in the fixture; its forward article path is
+    // gone too, but its author path survives
+    const commentsExpand = output.match(/export type CommentsExpand = (.+)/)?.[1]
+    expect(commentsExpand).not.toContain('"article"')
+    expect(commentsExpand).toContain('"author"')
+  })
+
+  test("skips relations map for collections without forward or back relations", () => {
+    const isolated = parseJson([
+      {
+        id: "c_iso",
+        name: "isolated",
+        type: "base",
+        system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "title", type: "text", system: false, required: true },
+        ],
+        indexes: [],
+      },
+    ])
+    const output = generate(isolated)
+    expect(output).not.toContain("IsolatedRelations")
   })
 
   test("emits the global RelationsMap and expand helpers once", () => {
     const output = generate(ir)
     expect(output).toContain("type RelationsMap = {")
-    expect(output).toContain('"users": {}')
+    expect(output).toContain('"users": UsersRelations')
+    expect(output).toContain('"categories": CategoriesRelations')
     expect(output).toContain('"articles": ArticlesRelations')
     expect(output).toContain("export type BuildExpand<R, P extends string>")
     expect(output).toContain("type Split<S extends string>")

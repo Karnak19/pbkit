@@ -1,20 +1,18 @@
 import type { SchemaIR, CollectionSchema, CollectionsConfig } from "@karnak19/pbkit";
 import type { PbkitPlugin, PluginContext, PluginOutputFile } from "@karnak19/pbkit";
-import { createExclusionPredicate, isOperationEnabled, pascalCase } from "@karnak19/pbkit";
+import { createExclusionPredicate, isOperationEnabled, pascalCase, collectionHasRelations } from "@karnak19/pbkit";
 import type { OperationName } from "@karnak19/pbkit";
 
 // A collection's read functions are generic over the requested expand string
-// when it has at least one forward relation whose target is generated. This
-// must match the SDK generator's `hasRelationsMap`, so the query factory's
-// generic lines up with the SDK function it calls.
+// exactly when the type generator emits an `XxxRelations` for it — shared
+// predicate (also used by the SDK generator) so the query factory's generic
+// lines up with the SDK function it calls.
 function hasRelations(
   col: CollectionSchema,
   ir: SchemaIR,
   isExcluded: (name: string) => boolean,
 ): boolean {
-  return ir.relations.some(
-    (r) => r.collectionName === col.name && !isExcluded(r.targetCollectionName),
-  );
+  return collectionHasRelations(col, ir, isExcluded);
 }
 
 function singularize(name: string): string {

@@ -28,6 +28,13 @@ A valid expand path is simply a walk along these edges starting from a
 collection. From `comments` you can expand `article`, and from there `article`'s
 own relations — `article.author`, `article.categories` — and so on.
 
+Edges can also be walked in reverse. For every relation field `B.x` pointing at
+`A`, collection `A` exposes a back-relation expand `{B}_via_{x}` that resolves
+to an array of `B` records (PocketBase's `_via_` convention) — or to a single
+record when `B.x` carries a single-column `UNIQUE` index. From `users` you
+can therefore expand `articles_via_author`, and from there `articles`' own
+relations — `articles_via_author.categories` — just like forward paths.
+
 pbkit enumerates these walks up to a maximum length and emits them as a union:
 
 ```ts
@@ -49,8 +56,9 @@ type completeness and the size and noise of the generated unions.
 ## Why cycles don't break generation
 
 Relations frequently form cycles — `users` may reference `articles` which
-reference `users` again. A naive walk would recurse forever. pbkit detects when
-a walk revisits a collection it is already inside and stops there, so a cyclic
-schema still produces a finite set of paths. The depth bound is the second
-safeguard: even without an explicit cycle, traversal can never exceed
-`expandDepth`.
+reference `users` again, and back-relations make cycles even more likely
+(`articles.author` ↔ `users.articles_via_author`). A naive walk would recurse
+forever. pbkit detects when a walk revisits a collection it is already inside
+and stops there, so a cyclic schema still produces a finite set of paths. The
+depth bound is the second safeguard: even without an explicit cycle, traversal
+can never exceed `expandDepth`.

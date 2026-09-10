@@ -58,7 +58,7 @@ describe("generateSdk", () => {
   });
 
   test("generates CRUD for auth collections", () => {
-    expect(output).toContain("export async function getUser(");
+    expect(output).toContain("export async function getUser<");
     expect(output).toContain("export async function createUser(");
     expect(output).toContain("export async function updateUser(");
     expect(output).toContain("export async function deleteUser(");
@@ -89,11 +89,11 @@ describe("generateSdk", () => {
   test("singularizes collection names correctly", () => {
     expect(output).toContain("getArticle<");
     expect(output).toContain("listArticles<");
-    expect(output).toContain("getCategory(");
-    expect(output).toContain("listCategories(");
+    expect(output).toContain("getCategory<");
+    expect(output).toContain("listCategories<");
     expect(output).toContain("getComment<");
     expect(output).toContain("listComments<");
-    expect(output).toContain("getUser(");
+    expect(output).toContain("getUser<");
   });
 
   test("uses collection name strings in pb.collection()", () => {
@@ -169,6 +169,9 @@ describe("generateSdk", () => {
   test("imports Relations maps and expand helpers for collections with relations", () => {
     expect(output).toContain("ArticlesRelations");
     expect(output).toContain("CommentsRelations");
+    // #40: back-relations give users/categories a Relations map too
+    expect(output).toContain("UsersRelations");
+    expect(output).toContain("CategoriesRelations");
     expect(output).toContain("BuildExpand");
     expect(output).toContain("Split");
   });
@@ -206,18 +209,53 @@ describe("generateSdk", () => {
     );
   });
 
-  test("read functions stay non-generic for collections without relations", () => {
-    expect(output).toContain("export async function getCategory(id: string, options?: RequestOptions");
-    expect(output).not.toContain("getCategory<");
+  test("read functions stay non-generic for collections without any relations", () => {
+    const isolated = parseJson([
+      {
+        id: "c_iso",
+        name: "isolated",
+        type: "base",
+        system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "title", type: "text", system: false, required: true },
+        ],
+        indexes: [],
+      },
+    ])
+    const out = generateSdk(isolated)
+    expect(out).toContain("export async function getIsolated(id: string, options?: RequestOptions")
+    expect(out).not.toContain("getIsolated<")
   });
 
-  test("uses plain RequestOptions for collections without relations", () => {
-    const getFn = output.slice(
-      output.indexOf("export async function getCategory"),
-      output.indexOf("}", output.indexOf("export async function getCategory")) + 1,
-    );
-    expect(getFn).toContain("options?: RequestOptions");
-    expect(getFn).not.toContain("Omit");
+  test("uses plain RequestOptions for collections without any relations", () => {
+    const isolated = parseJson([
+      {
+        id: "c_iso",
+        name: "isolated",
+        type: "base",
+        system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "title", type: "text", system: false, required: true },
+        ],
+        indexes: [],
+      },
+    ])
+    const out = generateSdk(isolated)
+    const getFn = out.slice(
+      out.indexOf("export async function getIsolated"),
+      out.indexOf("}", out.indexOf("export async function getIsolated")) + 1,
+    )
+    expect(getFn).toContain("options?: RequestOptions")
+    expect(getFn).not.toContain("Omit")
+  });
+
+  test("read functions are generic for collections with only back-relations (#40)", () => {
+    expect(output).toContain("getCategory<const S extends string")
+    expect(output).toContain("getUser<const S extends string")
+    expect(output).toContain("BuildExpand<CategoriesRelations, Split<S>>")
+    expect(output).toContain("BuildExpand<UsersRelations, Split<S>>")
   });
 });
 

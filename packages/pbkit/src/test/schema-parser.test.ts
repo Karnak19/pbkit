@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test"
-import { parseJson, normalizeField, normalizeCollection, extractRelations } from "../schema-parser"
+import { parseJson, normalizeField, normalizeCollection, extractRelations, hasSingleColumnUniqueIndex, collectionHasRelations } from "../schema-parser"
 import fullSchema from "./fixtures/full-schema.json"
 
 describe("parseJson", () => {
@@ -204,5 +204,84 @@ describe("extractRelations", () => {
     expect(fieldTypes).toContain("date")
     expect(fieldTypes).toContain("url")
     expect(fieldTypes).toContain("autodate")
+  })
+})
+
+// Mirrors PocketBase's `dbutils.FindSingleColumnUniqueIndex`: only a UNIQUE
+// index over exactly one column matching the field downgrades a back-relation
+// to single. The WHERE clause is ignored and matching is case-insensitive.
+describe("hasSingleColumnUniqueIndex", () => {
+  test("matches a plain single-column unique index", () => {
+    expect(hasSingleColumnUniqueIndex(
+      ["CREATE UNIQUE INDEX idx_profiles_user ON profiles (user)"],
+      "user",
+    )).toBe(true)
+  })
+
+  test("ignores the WHERE clause", () => {
+    expect(hasSingleColumnUniqueIndex(
+      ["CREATE UNIQUE INDEX idx_email ON users (email) WHERE email != ''"],
+      "email",
+    )).toBe(true)
+  })
+
+  test("matches case-insensitively with quoting, IF NOT EXISTS, sort and collate", () => {
+    expect(hasSingleColumnUniqueIndex(
+      ['create unique index if not exists `idx` on "profiles" (`USER` DESC)'],
+      "user",
+    )).toBe(true)
+    expect(hasSingleColumnUniqueIndex(
+      ["CREATE UNIQUE INDEX idx ON t (email COLLATE NOCASE ASC)"],
+      "email",
+    )).toBe(true)
+  })
+
+  test("rejects non-unique indexes", () => {
+    expect(hasSingleColumnUniqueIndex(
+      ["CREATE INDEX idx_articles_author ON articles (author)"],
+      "author",
+    )).toBe(false)
+  })
+
+  test("rejects multi-column unique indexes", () => {
+    expect(hasSingleColumnUniqueIndex(
+      ["CREATE UNIQUE INDEX idx ON invites (org, user)"],
+      "user",
+    )).toBe(false)
+  })
+
+  test("rejects other columns and expressions", () => {
+    expect(hasSingleColumnUniqueIndex(
+      ["CREATE UNIQUE INDEX idx ON profiles (handle)"],
+      "user",
+    )).toBe(false)
+    expect(hasSingleColumnUniqueIndex(
+      ["CREATE UNIQUE INDEX idx ON profiles (lower(handle))"],
+      "lower(handle)",
+    )).toBe(true)
+    expect(hasSingleColumnUniqueIndex(
+      ["CREATE UNIQUE INDEX idx ON profiles (lower(handle))"],
+      "handle",
+    )).toBe(false)
+  })
+
+  test("rejects unparsable index strings", () => {
+    expect(hasSingleColumnUniqueIndex(["not an index"], "user")).toBe(false)
+    expect(hasSingleColumnUniqueIndex([], "user")).toBe(false)
+  })
+})
+
+describe("collectionHasRelations", () => {
+  const ir = parseJson(fullSchema)
+  const noExclude = () => false
+
+  test("is true for forward and back-relation-only collections", () => {
+    expect(collectionHasRelations(ir.collections.find(c => c.name === "articles")!, ir, noExclude)).toBe(true)
+    expect(collectionHasRelations(ir.collections.find(c => c.name === "users")!, ir, noExclude)).toBe(true)
+  })
+
+  test("is false when every related collection is excluded", () => {
+    const excl = (n: string) => n === "articles" || n === "users"
+    expect(collectionHasRelations(ir.collections.find(c => c.name === "comments")!, ir, excl)).toBe(false)
   })
 })

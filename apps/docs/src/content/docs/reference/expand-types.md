@@ -50,8 +50,10 @@ export type ArticlesRelations = {
 
 `multi: true` (the relation's `maxSelect > 1`) means the expanded value is an
 array. Back-relations (`{sourceCollection}_via_{field}`, following PocketBase's
-convention) are always `multi: true` — a back-relation resolves to an array of
-records. You normally don't reference these directly — they exist so
+convention) resolve to an array too — except when the source's relation field
+carries a single-column `UNIQUE` index, in which case PocketBase returns a
+single record and the entry is `multi: false`. You normally don't reference
+these directly — they exist so
 `getArticle(id, { expand: "author" }).expand?.author` is typed as `UsersRecord`
 and `getUser(id, { expand: "articles_via_author" }).expand?.articles_via_author`
 is typed as `ArticlesRecord[]`.

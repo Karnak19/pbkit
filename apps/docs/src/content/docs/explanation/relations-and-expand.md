@@ -30,7 +30,8 @@ own relations — `article.author`, `article.categories` — and so on.
 
 Edges can also be walked in reverse. For every relation field `B.x` pointing at
 `A`, collection `A` exposes a back-relation expand `{B}_via_{x}` that resolves
-to an array of `B` records (PocketBase's `_via_` convention). From `users` you
+to an array of `B` records (PocketBase's `_via_` convention) — or to a single
+record when `B.x` carries a single-column `UNIQUE` index. From `users` you
 can therefore expand `articles_via_author`, and from there `articles`' own
 relations — `articles_via_author.categories` — just like forward paths.
 

@@ -135,4 +135,43 @@ void bad
 
     typecheck(typesSrc, consumer)
   }, 30_000)
+
+  test("BuildExpand resolves a one-to-one back-relation to a single record (#40)", () => {
+    const oneToOne = parseJson([
+      {
+        id: "c_users", name: "users", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+        ],
+        indexes: [],
+      },
+      {
+        id: "c_profiles", name: "profiles", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "user", type: "relation", system: false, required: true, maxSelect: 1, collectionId: "c_users" },
+        ],
+        indexes: ["CREATE UNIQUE INDEX idx_profiles_user ON profiles (user)"],
+      },
+    ])
+    const typesSrc = generate(oneToOne)
+
+    const consumer = `
+import type { BuildExpand, Split, UsersRelations, ProfilesRecord } from "./types.gen"
+
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Expect<T extends true> = T
+
+// UNIQUE index on profiles.user: single record, not an array
+type OneToOne = BuildExpand<UsersRelations, Split<"profiles_via_user">>
+type _oneToOne = Expect<Equal<OneToOne, { profiles_via_user: ProfilesRecord }>>
+
+// @ts-expect-error profiles_via_user resolves to ProfilesRecord, not an array
+const bad: OneToOne = { profiles_via_user: [] as ProfilesRecord[] }
+void bad
+`
+
+    typecheck(typesSrc, consumer)
+  }, 30_000)
 })

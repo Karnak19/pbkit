@@ -358,13 +358,78 @@ describe("generate", () => {
     expect(output).toContain('categories: { rec: CategoriesRecord; coll: "categories"; multi: true }')
   })
 
-  test("generates back-relations as multi:true entries named {source}_via_{field} (#40)", () => {
+  test("generates back-relations as multi entries named {source}_via_{field} (#40)", () => {
     const output = generate(ir)
     expect(output).toContain("export type UsersRelations = {")
     expect(output).toContain('articles_via_author: { rec: ArticlesRecord; coll: "articles"; multi: true }')
     expect(output).toContain('comments_via_author: { rec: CommentsRecord; coll: "comments"; multi: true }')
     expect(output).toContain('articles_via_categories: { rec: ArticlesRecord; coll: "articles"; multi: true }')
     expect(output).toContain('comments_via_article: { rec: CommentsRecord; coll: "comments"; multi: true }')
+  })
+
+  test("back-relation over a single-column UNIQUE index resolves to a single record (#40)", () => {
+    // Mirrors PocketBase's expandRecords: the dynamic back-relation is multiple
+    // unless the source's relation field carries a single-column UNIQUE index —
+    // independent of the source field's own maxSelect.
+    const oneToOne = parseJson([
+      {
+        id: "c_users", name: "users", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+        ],
+        indexes: [],
+      },
+      {
+        id: "c_profiles", name: "profiles", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "user", type: "relation", system: false, required: true, maxSelect: 1, collectionId: "c_users" },
+        ],
+        indexes: ["CREATE UNIQUE INDEX idx_profiles_user ON profiles (user)"],
+      },
+      {
+        id: "c_avatars", name: "avatars", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "user", type: "relation", system: false, required: false, maxSelect: 1, collectionId: "c_users" },
+        ],
+        // multi-column unique index: still an array
+        indexes: ["CREATE UNIQUE INDEX idx_avatars_user_kind ON avatars (user, kind)"],
+      },
+    ])
+    const output = generate(oneToOne)
+    expect(output).toContain('profiles_via_user: { rec: ProfilesRecord; coll: "profiles"; multi: false }')
+    expect(output).toContain('avatars_via_user: { rec: AvatarsRecord; coll: "avatars"; multi: true }')
+    const usersExpand = output.match(/export type UsersExpand = (.+)/)?.[1]
+    expect(usersExpand).toContain('"profiles_via_user"')
+    expect(usersExpand).toContain('"avatars_via_user"')
+  })
+
+  test("on a forward/back key collision the back-relation wins (matches PB runtime) (#40)", () => {
+    const colliding = parseJson([
+      {
+        id: "c_a", name: "alpha", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          // pathological: forward field literally named like alpha's back-relation
+          { id: "f2", name: "beta_via_link", type: "relation", system: false, required: false, maxSelect: 1, collectionId: "c_b" },
+        ],
+        indexes: [],
+      },
+      {
+        id: "c_b", name: "beta", type: "base", system: false,
+        fields: [
+          { id: "f1", name: "id", type: "text", system: true, required: true, primaryKey: true },
+          { id: "f2", name: "link", type: "relation", system: false, required: false, maxSelect: 1, collectionId: "c_a" },
+        ],
+        indexes: [],
+      },
+    ])
+    const output = generate(colliding)
+    // the shared key resolves to the back-relation (array of beta), not the
+    // forward field — same precedence as PocketBase's expandRecords
+    expect(output).toContain('beta_via_link: { rec: BetaRecord; coll: "beta"; multi: true }')
+    expect(output).not.toContain('beta_via_link: { rec: BetaRecord; coll: "beta"; multi: false }')
   })
 
   test("includes back-relations in Expand unions, incl. nested paths (#40)", () => {

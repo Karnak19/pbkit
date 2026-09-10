@@ -379,7 +379,7 @@ export default {
 - Install `pocketbase` in the consuming app; `client.gen.ts` imports it unless `sdk.pbImport` is customized.
 - Do not edit generated files directly. Update `pbkit.config.ts` or the PocketBase schema, then rerun generation.
 - Treat PocketBase date values as strings unless the project explicitly sets `types.dateStrings: false`.
-- Expand: read functions for collections with forward or back relations are generic over the `expand` string, so `record.expand?.x` is typed (single relation → record, multi and `_via_` back-relations → array, nested paths nest). The `expand` input is a plain string (no autocomplete); the `XxxExpand` union is still generated for reference. `XxxExpand` paths are generated up to `types.expandDepth`.
+- Expand: read functions for collections with forward or back relations are generic over the `expand` string, so `record.expand?.x` is typed (single relation → record, multi back-relations → array except one-to-one back-relations over a `UNIQUE` index → single record, nested paths nest). The `expand` input is a plain string (no autocomplete); the `XxxExpand` union is still generated for reference. `XxxExpand` paths are generated up to `types.expandDepth`.
 - Excluded collections produce no types, SDK functions, or plugin output.
 - Disabled operations remove the corresponding SDK functions and TanStack mutation/query helpers.
 - PocketBase filters are still PocketBase filter strings; pbkit types function parameters but does not validate filter syntax.

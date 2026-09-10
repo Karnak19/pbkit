@@ -1,5 +1,5 @@
 import type { SchemaIR, CollectionSchema, CollectionField } from "../schema-parser"
-import { isMultipleField } from "../schema-parser"
+import { isMultipleField, hasSingleColumnUniqueIndex } from "../schema-parser"
 import type { GenerateOptions } from "./types"
 import { createExclusionPredicate, getFieldConfig, type CollectionsConfig } from "../config"
 
@@ -153,10 +153,21 @@ function getExpandPaths(
   if (!col) return []
 
   const paths: string[] = []
-  const seen = new Set<string>()
+
+  // Keys of the emitted back-relations (computed first): PocketBase's
+  // `expandRecords` matches the `{x}_via_{y}` shape before looking up a direct
+  // relation field and never falls back, so on a collision the back-relation
+  // wins — the forward field of the same name is skipped here and enumerated
+  // from the back-relation's source collection instead.
+  const backKeys = new Set(
+    ir.relations
+      .filter(r => r.targetCollectionName === collectionName && !isExcluded(r.collectionName))
+      .map(r => backRelationKey(r.collectionName, r.fieldName)),
+  )
 
   for (const field of col.fields) {
     if (field.type !== "relation") continue
+    if (backKeys.has(field.name)) continue
 
     const targetName = ir.collections.find(
       c => c.id === field.options.collectionId,
@@ -164,8 +175,6 @@ function getExpandPaths(
     // Don't advertise a path into an excluded collection: its XxxRecord isn't
     // generated, and XxxRelations omits it, so the two would disagree.
     if (targetName && isExcluded(targetName)) continue
-    if (seen.has(field.name)) continue
-    seen.add(field.name)
     paths.push(field.name)
     if (!targetName) continue
 
@@ -176,17 +185,13 @@ function getExpandPaths(
   }
 
   // Reverse (`_via_`) relations: for every relation field B.x → A, collection A
-  // can expand `{B}_via_{x}` into an array of B records. Always multi, named per
-  // PocketBase's convention. Included in the same depth/visited budget as
-  // forward paths so cycles (e.g. listing.reports_via_listing.listing…) terminate.
+  // can expand `{B}_via_{x}` per PocketBase's convention. Included in the same
+  // depth/visited budget as forward paths so cycles
+  // (e.g. listing.reports_via_listing.listing…) terminate.
   for (const rel of ir.relations) {
     if (rel.targetCollectionName !== collectionName) continue
     if (isExcluded(rel.collectionName)) continue
     const key = backRelationKey(rel.collectionName, rel.fieldName)
-    // A forward field literally named `{x}_via_{y}` wins; the expand keyspace is
-    // shared, so we can't emit two entries for one key.
-    if (seen.has(key)) continue
-    seen.add(key)
     paths.push(key)
 
     const nextVisited = new Set(visited)
@@ -213,22 +218,33 @@ function expandType(
 
 // Forward + reverse (`_via_`) relations of a collection whose other side is
 // generated, used to build the typed `.expand` result shape. Reverse entries
-// are always `multi: true` and keyed `{sourceCollection}_via_{field}` per
-// PocketBase's convention. Returns null when there are none.
+// are keyed `{sourceCollection}_via_{field}` per PocketBase's convention; their
+// cardinality mirrors `expandRecords`: single only when the source's relation
+// field carries a single-column UNIQUE index, otherwise always an array —
+// independent of the source field's own maxSelect. Returns null when none.
+function backRelationMulti(ir: SchemaIR, sourceName: string, fieldName: string): boolean {
+  const source = ir.collections.find(c => c.name === sourceName)
+  if (!source) return true
+  return !hasSingleColumnUniqueIndex(source.indexes, fieldName)
+}
+
 function relationsMapType(
   col: CollectionSchema,
   ir: SchemaIR,
   isExcluded: (name: string) => boolean,
 ): string | null {
-  const rels = ir.relations.filter(
-    r => r.collectionName === col.name && !isExcluded(r.targetCollectionName),
-  )
   const backRels = ir.relations.filter(
     r => r.targetCollectionName === col.name && !isExcluded(r.collectionName),
   )
+  // Same collision rule as getExpandPaths: the shared expand keyspace resolves
+  // `_via_`-shaped keys to the back-relation, so a forward field of the same
+  // name yields its entry to the reverse one.
+  const backKeys = new Set(backRels.map(r => backRelationKey(r.collectionName, r.fieldName)))
+  const rels = ir.relations.filter(
+    r => r.collectionName === col.name && !isExcluded(r.targetCollectionName) && !backKeys.has(r.fieldName),
+  )
   if (rels.length === 0 && backRels.length === 0) return null
   const name = pascalCase(col.name)
-  const seen = new Set(rels.map(r => r.fieldName))
   const entries = rels.map(r => {
     const rec = `${pascalCase(r.targetCollectionName)}Record`
     const coll = JSON.stringify(r.targetCollectionName)
@@ -236,11 +252,9 @@ function relationsMapType(
   })
   for (const r of backRels) {
     const key = backRelationKey(r.collectionName, r.fieldName)
-    if (seen.has(key)) continue
-    seen.add(key)
     const rec = `${pascalCase(r.collectionName)}Record`
     const coll = JSON.stringify(r.collectionName)
-    entries.push(`  ${key}: { rec: ${rec}; coll: ${coll}; multi: true }`)
+    entries.push(`  ${key}: { rec: ${rec}; coll: ${coll}; multi: ${backRelationMulti(ir, r.collectionName, r.fieldName)} }`)
   }
   return `export type ${name}Relations = {\n${entries.join("\n")}\n}`
 }

@@ -1,6 +1,7 @@
 import type { SchemaIR, CollectionSchema } from "../schema-parser";
 import type { SdkGenerateOptions } from "./types";
 import { createExclusionPredicate, isOperationEnabled, type CollectionsConfig } from "../config";
+import { collectionHasRelations } from "../schema-parser";
 
 function pascalCase(name: string): string {
   return name
@@ -17,21 +18,15 @@ function singularize(name: string): string {
 }
 
 // A collection has a typed relations map (and thus a typed `.expand` result)
-// when it has at least one forward relation whose target is generated, or at
-// least one reverse (`_via_`) relation whose source is generated. The
-// exclusion filter must match the type generator's `relationsMapType`, or the
-// SDK would reference an `XxxRelations`/`BuildExpand`/`Split` that types.gen.ts
-// never emitted.
+// exactly when the type generator emits an `XxxRelations` for it — shared
+// predicate (also used by the TanStack plugin) so the SDK can never reference
+// an `XxxRelations`/`BuildExpand`/`Split` that types.gen.ts never emitted.
 function hasRelationsMap(
   col: CollectionSchema,
   ir: SchemaIR,
   isExcluded: (name: string) => boolean,
 ): boolean {
-  return ir.relations.some(
-    (r) =>
-      (r.collectionName === col.name && !isExcluded(r.targetCollectionName)) ||
-      (r.targetCollectionName === col.name && !isExcluded(r.collectionName)),
-  );
+  return collectionHasRelations(col, ir, isExcluded);
 }
 
 // The `.expand` shape contributed to a read result, given the captured

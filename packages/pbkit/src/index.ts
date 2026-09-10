@@ -8,6 +8,8 @@ export {
   normalizeField,
   extractRelations,
   isMultipleField,
+  hasSingleColumnUniqueIndex,
+  collectionHasRelations,
 } from "./schema-parser";
 
 export type {

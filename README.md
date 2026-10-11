@@ -263,7 +263,7 @@ This repo uses Changesets for package versioning and npm publishing.
 bun run changeset
 ```
 
-Merge the generated changeset with your feature. On `main`, the release workflow opens a version PR. Merging that PR publishes the public packages to npm using the `NPM_TOKEN` repository secret. The docs deploy workflow continues to publish `apps/docs` to GitHub Pages.
+Merge the generated changeset with your feature. On `main`, the release workflow opens a version PR. Merging that PR publishes the public packages to npm through npm trusted publishing (no token; each package trusts `.github/workflows/release.yml` on npmjs.com). The docs deploy workflow continues to publish `apps/docs` to GitHub Pages.
 
 ## Programmatic API
 

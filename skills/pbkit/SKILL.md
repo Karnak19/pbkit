@@ -1,8 +1,8 @@
 ---
 name: pbkit
-description: Typed PocketBase SDK generator. Generates TypeScript types, SDK functions, realtime subscriptions, TanStack Query options, and Zod schemas from a PocketBase schema.
+description: Typed PocketBase SDK generator (TypeScript types, SDK functions, realtime subscriptions, TanStack Query options, Zod schemas) and the `pbkit` CLI for working with a live PocketBase. Use it to manage collections with `pbkit schema` (list/get/pull/apply, add fields and indexes, set API rules) and to read and diagnose logs with `pbkit logs` (tail, filter errors, find slow endpoints with `logs top`).
 metadata:
-  tags: pocketbase, typescript, sdk, codegen, tanstack-query, zod, realtime, database
+  tags: pocketbase, typescript, sdk, codegen, tanstack-query, zod, realtime, database, cli, logs
 ---
 
 # pbkit

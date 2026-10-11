@@ -159,6 +159,8 @@ pbkit logs --slow 1000 -v           # the requests that took 1s or more, with wh
 
 Use `pbkit logs top --sort errors` to rank by failures instead of latency.
 
+For a step-by-step walkthrough, see [Find slow endpoints](/how-to/find-slow-endpoints).
+
 Two things to keep in mind:
 
 - The timing is for the whole HTTP request as PocketBase saw it, not for

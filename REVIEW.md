@@ -25,8 +25,19 @@ PocketBase server behavior, not plausible assumptions.
 - The SDK, TanStack, and type generators share predicates (e.g. has-relations,
   exclusion handling). Flag byte-identical or near-identical predicates duplicated across
   `packages/*`; prefer a single helper exported from `@karnak19/pbkit` and called everywhere.
-- Flag unreachable guards (e.g. membership check on a set known to be empty, uniqueness
-  already guaranteed by schema) — remove rather than keep.
+
+## CLI and library input handling
+
+- Parse user-supplied keys against lookup maps with `Object.hasOwn`, never `in` or
+  prototype-chain access: `--level toString` passes an `in` check and returns an
+  `Object.prototype` member. When a string is validated against an enum-like map, demand a
+  test for `toString`/`constructor`.
+- Flag dead knobs and unreachable guards: options/fields no caller ever sets (only a test
+  stubs the behavior), membership checks on a known-empty set, uniqueness already
+  guaranteed by schema. Delete them and inline the constant rather than keep them.
+- Truncation must be reported, not hidden: when a paged/limited aggregation can stop
+  early (e.g. a full page shares one timestamp), it must return a partial flag and say how
+  many results it produced, instead of presenting truncated numbers as complete.
 
 ## Dependency-only PRs
 

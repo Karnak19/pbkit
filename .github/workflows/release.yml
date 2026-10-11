@@ -42,7 +42,7 @@ jobs:
         run: npm install -g npm@^11.5.1
 
       - name: Create release PR or publish packages
-        uses: changesets/action@v2
+        uses: changesets/action@v1
         with:
           version: bun run version-packages
           publish: bun run release

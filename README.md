@@ -241,7 +241,22 @@ pbkit generate              # Generate from pbkit.config.ts
 pbkit generate --watch      # Watch mode (polls every 10s)
 pbkit generate --config ./path/to/config.ts
 pbkit --help
+
+# Manage collections (superuser auth via POCKETBASE_URL + POCKETBASE_ADMIN_EMAIL/PASSWORD or POCKETBASE_ADMIN_TOKEN)
+pbkit schema list                       # every collection: name + type
+pbkit schema pull --out pb-schema.json  # snapshot the generator can read
+pbkit schema apply pb-schema.json       # import definitions (non-destructive)
+pbkit schema add-field posts '{"name":"slug","type":"text"}'
+pbkit schema set-rule posts --list "@request.auth.id != ''"
+
+# Read PocketBase logs (same auth)
+pbkit logs --since 1h --errors          # failing requests and error logs, last hour
+pbkit logs -f                           # follow new logs as they arrive
+pbkit logs top --since 24h              # per-endpoint calls, errors, p50/p95/max
+pbkit logs --slow 1000 -v               # requests that took 1s or more, with details
 ```
+
+Every command and option is in the [CLI reference](https://karnak19.github.io/pbkit/reference/cli/).
 
 ## Development
 

@@ -16,3 +16,13 @@ export function action<T extends ArgsDef>(
     }
   }
 }
+
+/**
+ * citty calls a parent command's `run` even after dispatching to one of its
+ * subcommands. Parents with both `run` and `subCommands` use this to bail out
+ * when the first positional named a subcommand.
+ */
+export function invokedSubCommand(args: { _: string[] }, subCommands: object): boolean {
+  const first = args._[0]
+  return first !== undefined && Object.hasOwn(subCommands, first)
+}

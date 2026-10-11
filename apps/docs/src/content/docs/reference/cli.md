@@ -81,6 +81,94 @@ Schema commands authenticate as a superuser
 | `POCKETBASE_ADMIN_PASSWORD` | Superuser password |
 | `POCKETBASE_ADMIN_TOKEN` | Pre-issued admin token (alternative to email/password) |
 
+### `pbkit logs`
+
+Read PocketBase's request and app logs from the admin API (`/api/logs`), like
+`tail` for your server. Uses the same superuser authentication as
+[`pbkit schema`](#authentication).
+
+```bash
+pbkit logs                          # last 50 logs, oldest first
+pbkit logs -n 200 --level warn      # last 200 warnings and errors
+pbkit logs --since 1h --errors      # failing requests and error logs from the last hour
+pbkit logs --slow 1000 -v           # requests that took 1s or more, with details
+pbkit logs --filter 'data.status>=500'
+pbkit logs -f                       # keep printing new logs as they arrive
+pbkit logs --json | jq .            # raw records, one JSON object per line
+pbkit logs get <id>                 # one log as pretty JSON
+pbkit logs stats [--since 24h]      # hourly log counts
+pbkit logs top [--since 24h]        # per-endpoint calls, errors and latency
+```
+
+Each log prints on one line: time, level, then for request logs the method,
+status, URL and how long the request took (`12ms`, `1.4s`); other logs show
+their message. If the log has an error, it is appended at the end. In a
+terminal, slow requests stand out: latency is yellow above 500ms and red above
+2s. Colors are turned off when output is piped or `NO_COLOR` is set.
+
+#### Options
+
+| Flag | Short | Description |
+|---|---|---|
+| `--limit <n>` | `-n` | How many recent logs to show (default 50) |
+| `--since <dur>` | | Only logs from the last `30m`, `1h`, `24h`, `7d`, ... |
+| `--level <name>` | | Minimum level: `debug`, `info`, `warn` or `error` |
+| `--slow <ms>` | | Only requests that took at least this many milliseconds |
+| `--errors` | | Only failing requests (status 400 and up) and error-level logs |
+| `--filter <expr>` | | Any PocketBase filter (e.g. `data.status>=400`) |
+| `--include-self` | | Also show the CLI's own `/api/logs` requests (hidden by default) |
+| `--verbose` | `-v` | Print a second, indented line under request logs with `auth`, IP, `referer`, `userAgent` and `details` (empty fields are left out) |
+| `--json` | | Print raw records, one JSON object per line |
+| `--follow` | `-f` | Poll every 2 seconds and print new logs as they arrive |
+| `--config <path>` | `-c` | Config file used for fallback URL/token (auth env vars take precedence) |
+
+All the narrowing flags (`--since`, `--level`, `--slow`, `--errors`,
+`--filter`) combine with AND. `stats` accepts `--since`, `--filter` and
+`--json`.
+
+PocketBase writes logs to its database in batches, so with `--follow` new
+entries can show up a few seconds after the request happened. That is normal.
+
+#### `pbkit logs top`
+
+Groups request logs by method and route and shows, per endpoint: number of
+calls, number of errors (status 400 and up), and the p50, p95 and max request
+time. Routes are normalized so they group well: the query string is dropped,
+record ids become `:id`, and file URLs become `/api/files/<collection>/:id/:file`.
+
+| Flag | Short | Description |
+|---|---|---|
+| `--since <dur>` | | Time window (default `1h`) |
+| `--sort <key>` | | `latency` (p95, the default), `errors` or `calls` |
+| `--limit <n>` | `-n` | Rows to show (default 20) |
+| `--max <n>` | | Stop after fetching this many logs (default 20000) |
+| `--slow`, `--errors`, `--level`, `--filter`, `--include-self` | | Same as for `pbkit logs` |
+| `--json` | | Print the summary as JSON |
+
+Percentiles use the nearest-rank method, so each value is a real request time
+from the window.
+
+#### Finding slow or failing endpoints
+
+Start with the overview, then look at the individual requests:
+
+```bash
+pbkit logs top --since 24h          # which endpoints are slow or failing?
+pbkit logs --slow 1000 -v           # the requests that took 1s or more, with who made them
+```
+
+Use `pbkit logs top --sort errors` to rank by failures instead of latency.
+
+Two things to keep in mind:
+
+- The timing is for the whole HTTP request as PocketBase saw it, not for
+  individual SQL queries. A slow endpoint tells you where to look, not which
+  query is to blame.
+- `top` downloads the logs in the window to your machine and does the math
+  there. It asks only for the fields it needs and pages gently, but on a busy
+  server it stops at `--max` logs (default 20000) and warns you that the result
+  is partial. Narrow `--since` or raise `--max` if that happens.
+
 ### Config auto-detection
 
 pbkit searches for a config file in the current working directory in this order:

@@ -25,7 +25,7 @@ export type LogLevelName = keyof typeof LOG_LEVELS
 /** Parse a `--level` value into PocketBase's numeric level. */
 export function parseLevel(name: string): number {
   const key = name.trim().toLowerCase()
-  if (key in LOG_LEVELS) return LOG_LEVELS[key as LogLevelName]
+  if (Object.hasOwn(LOG_LEVELS, key)) return LOG_LEVELS[key as LogLevelName]
   throw new Error(
     `Unknown log level "${name}". Expected one of: ${Object.keys(LOG_LEVELS).join(", ")}`,
   )

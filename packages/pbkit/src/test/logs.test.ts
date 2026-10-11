@@ -51,6 +51,8 @@ describe("levels", () => {
 
   test("parseLevel rejects unknown names", () => {
     expect(() => parseLevel("loud")).toThrow(/Unknown log level/)
+    expect(() => parseLevel("toString")).toThrow(/Unknown log level/)
+    expect(() => parseLevel("constructor")).toThrow(/Unknown log level/)
   })
 
   test("levelName rounds in-between values down", () => {

@@ -35,8 +35,6 @@ export interface LogsOptions extends PrintOptions {
   limit: number
   filter?: string
   follow?: boolean
-  /** Poll interval for `--follow`, in ms. */
-  intervalMs?: number
 }
 
 /** Print logs in the given order: raw JSON lines or compact formatted lines. */
@@ -135,9 +133,8 @@ export async function logsCommand(client: SchemaClient, opts: LogsOptions): Prom
   // Start from the newest log shown, or "now" if nothing matched yet.
   let cursor = advanceCursor({ since: recent.at(-1)?.created ?? toPbDate(new Date()), seen: new Set() }, recent)
 
-  const interval = opts.intervalMs ?? 2000
   while (true) {
-    await new Promise((r) => setTimeout(r, interval))
+    await new Promise((r) => setTimeout(r, 2000))
     try {
       const fresh = await fetchSince(client, cursor.since, cursor.seen, opts.filter)
       printLogs(fresh, opts)
@@ -179,8 +176,6 @@ const TOP_FIELDS = "id,created,data.method,data.url,data.status,data.execTime"
 export interface WindowOptions {
   filter?: string
   max: number
-  /** Pause between pages, in ms, to stay light on the server. */
-  pauseMs?: number
   onProgress?: (fetched: number) => void
   sleep?: (ms: number) => Promise<void>
 }
@@ -220,17 +215,19 @@ export async function fetchWindow(client: SchemaClient, opts: WindowOptions): Pr
     }
     opts.onProgress?.(samples.length)
 
-    // A short page means we've reached the end of the window. An empty
-    // `fresh` page can only happen if >PAGE_SIZE logs share one timestamp;
-    // stop rather than loop forever.
-    if (data.items.length < PAGE_SIZE || fresh.length === 0) return { samples, partial: false }
+    // A short page means we've reached the end of the window.
+    if (data.items.length < PAGE_SIZE) return { samples, partial: false }
+    // An empty `fresh` page can only happen if >PAGE_SIZE logs share one
+    // timestamp; stop rather than loop forever, and report it as partial.
+    if (fresh.length === 0) return { samples, partial: true }
 
     const oldest = fresh[fresh.length - 1]!.created
     const ids = boundary?.created === oldest ? boundary.ids : new Set<string>()
     for (const item of fresh) if (item.created === oldest) ids.add(item.id)
     boundary = { created: oldest, ids }
 
-    await sleep(opts.pauseMs ?? 100)
+    // Pause between pages to stay light on the server.
+    await sleep(100)
   }
   return { samples, partial: true }
 }
@@ -269,7 +266,7 @@ export async function topCommand(client: SchemaClient, opts: TopOptions): Promis
 
   if (partial) {
     console.warn(
-      `Warning: stopped at --max ${opts.max} logs, so these numbers are partial. Raise --max or narrow --since to cover the whole window.`,
+      `Warning: stopped after ${samples.length} logs, before covering the whole window, so these numbers are partial. Raise --max or narrow --since to cover the whole window.`,
     )
   }
 }

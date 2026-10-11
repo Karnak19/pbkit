@@ -172,6 +172,29 @@ Auth is via superuser credentials from the environment (preferred) with config f
 - `add-field`, `add-index`, and `set-rule` fetch the current collection and patch it, so they never clobber unrelated fields, indexes, or rules.
 - For `set-rule`, a rule value of `"null"` makes the rule superuser-only and `""` makes it public.
 
+### Logs (`pbkit logs`)
+
+`pbkit logs` reads PocketBase logs from the admin API (`/api/logs`) with the same superuser auth as `pbkit schema`. Useful to check what a request actually did, why it failed, or which endpoints are slow.
+
+```bash
+pbkit logs                              # last 50 logs, oldest first
+pbkit logs -n 200 --level warn          # warnings and errors only
+pbkit logs --since 1h --errors          # failing requests + error logs, last hour
+pbkit logs --slow 1000 -v               # requests >= 1s, with auth/IP/user agent/details
+pbkit logs --filter 'data.status>=400'  # any PocketBase filter, ANDed with the other flags
+pbkit logs -f                           # follow new logs (polls every ~2s)
+pbkit logs --json                       # raw records, one JSON object per line
+pbkit logs get <id>                     # one log as pretty JSON
+pbkit logs stats --since 24h            # hourly counts
+pbkit logs top --since 24h              # per-endpoint calls, errors, p50/p95/max latency
+pbkit logs top --sort errors            # rank endpoints by failures
+```
+
+- Request lines show `METHOD status url (latency)`; latency is `12ms` or `1.4s`, yellow above 500ms and red above 2s in a terminal.
+- To find slow endpoints: `pbkit logs top --since 24h`, then `pbkit logs --slow <ms> -v` for the individual requests. Timing covers the whole HTTP request, not individual SQL queries.
+- `top` fetches logs to the local machine, capped by `--max` (default 20000); it warns when the result is partial.
+- PocketBase writes logs in batches, so `--follow` can lag a few seconds behind. That is expected.
+
 ## Client Singleton
 
 pbkit generates a default PocketBase client in `client.gen.ts`:

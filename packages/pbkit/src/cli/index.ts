@@ -1,8 +1,9 @@
 #!/usr/bin/env bun
 import { defineCommand, runMain } from "citty"
-import { action } from "./action"
+import { action, invokedSubCommand } from "./action"
 import { resolveConfigPath } from "../config/loader"
 import { generateProject } from "../generate"
+import { logsCommand } from "./logs"
 import { schemaCommand } from "./schema"
 import type { PbkitConfig } from "../config/types"
 
@@ -58,12 +59,17 @@ const generate = defineCommand({
   run: action(({ args }) => doGenerate(args)),
 })
 
+const subCommands = { generate, schema: schemaCommand, logs: logsCommand }
+
 const main = defineCommand({
   meta: { name: "pbkit", description: "PocketBase code generation toolkit" },
   args: { ...generateArgs },
-  subCommands: { generate, schema: schemaCommand },
+  subCommands,
   // Bare `pbkit` (with optional flags) runs generate.
-  run: action(({ args }) => doGenerate(args)),
+  run: action(async ({ args }) => {
+    if (invokedSubCommand(args, subCommands)) return
+    await doGenerate(args)
+  }),
 })
 
 runMain(main)

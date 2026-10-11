@@ -93,6 +93,22 @@ they are never passed inline:
 | `POCKETBASE_ADMIN_PASSWORD`  | Superuser password                                 |
 | `POCKETBASE_ADMIN_TOKEN`     | Pre-issued admin token (alternative to email/pass) |
 
+## Read Logs
+
+`pbkit logs` reads PocketBase's logs from the admin API, using the same
+superuser credentials as `pbkit schema`.
+
+```bash
+pbkit logs                              # last 50 logs, oldest first
+pbkit logs --since 1h --errors          # failing requests and error logs
+pbkit logs --slow 1000 -v               # requests >= 1s, with auth, IP, user agent
+pbkit logs -f                           # follow new logs (polls every ~2s)
+pbkit logs --json                       # one JSON object per line
+pbkit logs get <id>                     # one log as pretty JSON
+pbkit logs stats --since 24h            # hourly counts
+pbkit logs top --since 24h              # slowest / most failing endpoints
+```
+
 ## Use The SDK
 
 ```ts

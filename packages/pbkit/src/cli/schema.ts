@@ -24,7 +24,7 @@ async function loadConfigOptional(configPath?: string): Promise<PbkitConfig | un
   }
 }
 
-const configArg = {
+export const configArg = {
   config: {
     type: "string",
     alias: "c",
@@ -32,7 +32,7 @@ const configArg = {
   },
 } as const
 
-async function client(configPath?: string): Promise<SchemaClient> {
+export async function client(configPath?: string): Promise<SchemaClient> {
   return createSchemaClient(await loadConfigOptional(configPath))
 }
 

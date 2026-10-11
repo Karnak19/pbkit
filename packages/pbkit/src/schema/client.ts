@@ -18,7 +18,8 @@ export interface SchemaClientOptions {
  * Thin REST client over PocketBase's `/api/collections` admin API.
  *
  * Only schema operations are exposed — record CRUD is intentionally out of
- * scope (mutating prod records is not what this command is for).
+ * scope (mutating prod records is not what this command is for). `get` is a
+ * generic read-only escape hatch for other admin endpoints (e.g. `/api/logs`).
  */
 export class SchemaClient {
   private readonly baseUrl: string
@@ -58,6 +59,19 @@ export class SchemaClient {
 
     if (res.status === 204) return undefined as T
     return (await res.json()) as T
+  }
+
+  /**
+   * Authenticated GET against any admin endpoint. Query params go through
+   * URLSearchParams so filter values with quotes/operators are encoded safely.
+   */
+  get<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
+    const search = new URLSearchParams()
+    for (const [key, value] of Object.entries(params ?? {})) {
+      if (value !== undefined && value !== "") search.set(key, String(value))
+    }
+    const qs = search.toString()
+    return this.request<T>(qs ? `${path}?${qs}` : path)
   }
 
   /** List every collection (paginated). */

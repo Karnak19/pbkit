@@ -18,9 +18,6 @@ jobs:
   release:
     name: Version and Publish
     runs-on: ubuntu-latest
-    env:
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -39,13 +36,10 @@ jobs:
 
       - run: bun run ci
 
-      - name: Configure npm auth
-        run: |
-          npm config set @karnak19:registry https://registry.npmjs.org
-          npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
-
-      - name: Verify npm auth
-        run: npm whoami
+      # npm trusted publishing (OIDC via `id-token: write`) needs npm >= 11.5.1;
+      # Node 22 ships npm 10. No token: each package trusts this workflow on npmjs.com.
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@^11.5.1
 
       - name: Create release PR or publish packages
         uses: changesets/action@v2
@@ -54,4 +48,3 @@ jobs:
           publish: bun run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
